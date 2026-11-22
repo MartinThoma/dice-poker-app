@@ -1,0 +1,56 @@
+# Dice Poker: Product Requirements
+
+Dice Poker is a single-player dice game in the browser. It is a static web app: no server logic, no build step, no accounts. Open roadmap items are tracked in [README.md](README.md).
+
+## Naming
+
+- The game, its categories and all texts use generic names only ("Dice Poker", "five of a kind", "Full House", …).
+- No trademarked or copyrighted game names, brands or artwork appear anywhere in the app, code or docs.
+
+## Gameplay
+
+- 5 dice, 13 rounds. Each round has up to 3 rolls.
+- After the first roll, the player can hold or release any die between rolls.
+- After at least one roll, the player must put the dice into exactly one unused category. A category that doesn't match scores 0 (a "scratch").
+- Each open category previews the points the current dice would score.
+- Categories and scores:
+
+  | Section | Category | Score |
+  |---|---|---|
+  | Upper | Ones … Sixes | Sum of dice showing that face |
+  | Upper | Bonus | +35 if the upper sum is 63 or more |
+  | Lower | Three of a Kind | Sum of all dice if at least 3 match |
+  | Lower | Four of a Kind | Sum of all dice if at least 4 match |
+  | Lower | Full House | 25 for a triple plus a pair (five of a kind does not count) |
+  | Lower | Small Straight | 30 for 4 consecutive faces |
+  | Lower | Large Straight | 40 for 5 consecutive faces |
+  | Lower | Dice Poker | 50 for five of a kind |
+  | Lower | Chance | Sum of all dice |
+  | Extra | Extra five of a kind | +100 for each further five of a kind once the Dice Poker box holds 50 |
+
+- Dice use a cryptographically secure random source.
+- When the game ends, a dialog shows the final score and whether it is a new best, and offers a new game.
+
+## Leaderboard
+
+- The all-time best score is stored on the device.
+- The last 10 finished games (score and date) are stored on the device.
+- A live leaderboard beside the board shows:
+  - a gauge with the past games as marks on the scale and the current score filling up past them;
+  - a ranked list of the past games, with a "You (live)" row at the current rank that moves up as the player overtakes games;
+  - a one-line summary of the current rank.
+
+## App, install and updates
+
+- The game can be installed as an app (home screen or desktop) on browsers that support it. If the browser offers an install prompt, an "Install app" button is shown. On iOS, a hint explains "Share → Add to Home Screen".
+- Once loaded, the game works fully offline.
+- The current version is always visible in the footer (e.g. "v1.0.0").
+- The player can trigger "Check for updates" manually. The app also checks automatically when it is opened, when it returns to the foreground and once an hour while open.
+- When a new version is available, a banner offers "Update" or "Later". Updating never happens silently in the middle of a game, and if a game is in progress the banner says that updating restarts it.
+- Install, offline play and updates need HTTPS or `localhost`. Over plain HTTP on a LAN address the game still works, but these features are unavailable.
+
+## Platform
+
+- Works on phones (from 320px wide) and desktops, in light and dark mode, with keyboard and screen readers.
+- Respects `prefers-reduced-motion`.
+- `make run` serves the game on the local network and prints the URLs.

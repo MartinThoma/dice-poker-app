@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dice Poker</title>
+  <meta name="description" content="Dice Poker: a classic five-dice game. Roll five dice, hold the keepers and chase the best hand.">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1f6b4a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Dice Poker">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="update-banner" class="update-banner" role="alert" hidden>
+    <span id="update-text">A new version is available.</span>
+    <button id="update-now" type="button" class="primary small">Update</button>
+    <button id="update-later" type="button" class="link">Later</button>
+  </div>
+  <main>
+    <header>
+      <h1>Dice Poker</h1>
+      <p class="sub">Round <span id="round">1</span> of 13 · Best: <span id="best">–</span></p>
+    </header>
+
+    <div class="layout">
+    <div class="board">
+    <section class="table" aria-label="Dice">
+      <div id="dice" class="dice"></div>
+      <div class="controls">
+        <button id="roll" type="button" class="primary"></button>
+        <p id="status" role="status" aria-live="polite"></p>
+      </div>
+      <p class="tip">Tap a die to hold it. Then tap a category to score.</p>
+    </section>
+
+    <section class="card" aria-label="Scorecard">
+      <table id="scorecard"></table>
+    </section>
+    </div>
+
+    <aside class="side card" aria-label="Leaderboard">
+      <h2>Leaderboard</h2>
+      <p id="rank" class="rank" aria-live="polite"></p>
+      <div class="board-wrap">
+        <div id="gauge" class="gauge" role="meter" aria-label="Current score" aria-valuemin="0">
+          <div class="tube"><div class="fill"></div></div>
+          <div class="bulb"></div>
+          <div id="marks" class="marks"></div>
+        </div>
+        <ol id="leaderboard" class="leaderboard"></ol>
+      </div>
+    </aside>
+    </div>
+
+    <footer class="app-footer">
+      <button id="install" type="button" class="primary small" hidden>Install app</button>
+      <p id="ios-hint" class="hint" hidden>To install: tap Share, then “Add to Home Screen”.</p>
+      <p class="meta">
+        Dice Poker <span id="version"></span>
+        <button id="check-update" type="button" class="link" hidden>Check for updates</button>
+        <span id="update-status" aria-live="polite"></span>
+      </p>
+    </footer>
+
+    <dialog id="end">
+      <h2>Game over</h2>
+      <p id="final"></p>
+      <form method="dialog"><button id="again" class="primary" value="again">Play again</button></form>
+    </dialog>
+  </main>
+  <script src="version.js"></script>
+  <script src="scoring.js"></script>
+  <script src="game.js"></script>
+  <script src="pwa.js"></script>
+</body>
+</html>
