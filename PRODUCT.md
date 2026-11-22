@@ -43,6 +43,43 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
   - a ranked list of the past games, with a "You (live)" row at the current rank that moves up as the player overtakes games;
   - a one-line summary of the current rank.
 
+## Quests
+
+- There are 31 quests in 5 groups. A trophy button in the header shows the progress (e.g. "4/31") and opens the quest list.
+- Quest progress is stored on the device. A quest is completed once and stays completed.
+- **Celebration:**
+  - A visible quest shows a short toast ("Quest complete · <name>").
+  - A hidden quest shows a card with its icon and name, which flips after about 2 seconds to reveal the condition. A tap flips it early, and a second tap closes it. It closes by itself after 7 seconds.
+  - Celebrations play one after another, each with a sound. Quests completed on the last turn play before the game-over dialog.
+- **Hidden quests in the list:** they appear as "?" until found, with a counter ("2 of 8 found").
+- **Scope:** quests are only checked during play, never retroactively against older games.
+
+| Group | Quest | Condition |
+|---|---|---|
+| Score | Double Century | Finish a game with 200+ points |
+| Score | High Roller | Finish a game with 250+ points |
+| Score | Triple Crown | Finish a game with 300+ points |
+| Score | Bonus Hunter | Earn the upper section bonus |
+| Time | Blitz | Finish a game in under 3 minutes (first roll to last score) |
+| Time | Night Owl | Finish a game between midnight and 5 am |
+| Time | Early Bird | Finish a game between 5 am and 8 am |
+| Time | Triple Header | Finish 3 games on the same day |
+| Time | Hot Streak | Finish a game on 3 days in a row |
+| Specials | All of a Kind | Three of a Kind, Four of a Kind and Dice Poker all scored above 0 in one game |
+| Perfection | Perfect *X* (13 quests) | Score a box's maximum: Ones 5 … Sixes 30, Three/Four of a Kind 30, Full House 25, Small Straight 30, Large Straight 40, Dice Poker 50, Chance 30 |
+| Hidden | Surgical Strike | Upper section complete with exactly 63 |
+| Hidden | Against All Odds | Third roll with all 5 dice rerolled lands a Full House, Four of a Kind, Large Straight or five of a kind (in any box) |
+| Hidden | Scratch & Survive | 0 in the Dice Poker box within the first 6 turns, final total above 225 |
+| Hidden | All-In | Exactly one die held after roll 1, and the turn ends in five of a kind (on roll 2 or 3) |
+| Hidden | The Gambler | 25+ in Chance with at least one One or Two among the dice |
+| Hidden | Zero Waste | Finish a game with no 0 on the scorecard |
+| Hidden | Twin Peaks | Five of a kind twice in one game (in any boxes), once with a face of 1–3 and once with 4–6 |
+| Hidden | The Escalator | Small Straight, Large Straight, Full House on three consecutive turns, none of them 0 |
+
+- **Perfection names** come from the scorecard labels, so renaming a box renames its quest.
+- **Changed from the roadmap:** The Gambler originally asked for "25+ in Chance using at least three Ones or Twos". That is impossible, because the maximum is 2+2+2+6+6 = 18.
+- **Games in progress from v1.2.0:** turns played before the update have no roll records. Quests that depend on them (Blitz; Against All Odds and All-In for the turn interrupted by the update) can't trigger for that game, but every later game tracks them fully.
+
 ## Sound
 
 - Sound effects play when rolling (a rattle, then one thump per die rolled), when holding or releasing a die (a tick), when banking points (a chime that gets longer for 25+ and 40+ points) and when scratching a zero (a dull "bonk").

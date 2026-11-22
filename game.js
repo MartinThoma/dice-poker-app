@@ -7,8 +7,8 @@
   const HISTORY_KEY = "dice-poker-history";
   const HISTORY_MAX = 10;
   const CURRENT_KEY = "dice-poker-current";
-  // Bump when the saved shape changes; older saves are then discarded.
-  const SAVE_FORMAT = 1;
+  // Bump when the saved shape changes. loadSaved() still accepts format 1 (v1.2.0).
+  const SAVE_FORMAT = 2;
 
   const PIPS = {
     1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9],
@@ -21,7 +21,10 @@
   let state;
 
   const freshState = () => ({ dice: [1, 1, 1, 1, 1], held: [false, false, false, false, false],
-    rollsLeft: MAX_ROLLS, scores: {}, pokerBonuses: 0, rolling: false });
+    rollsLeft: MAX_ROLLS, scores: {}, pokerBonuses: 0, rolling: false,
+    // Quest tracking: scored turns, which dice each roll of this turn rolled
+    // (null = unknown, e.g. after restoring an older save) and when play began.
+    log: [], rolls: [], startedAt: null });
 
   function newGame() {
     state = freshState();
@@ -32,9 +35,10 @@
   /* ---------- Game in progress survives reloads ---------- */
 
   function persist(s) {
-    const { dice, held, rollsLeft, scores, pokerBonuses } = s || state;
+    const { dice, held, rollsLeft, scores, pokerBonuses, log, rolls, startedAt } = s || state;
     try {
-      localStorage.setItem(CURRENT_KEY, JSON.stringify({ v: SAVE_FORMAT, dice, held, rollsLeft, scores, pokerBonuses }));
+      localStorage.setItem(CURRENT_KEY, JSON.stringify(
+        { v: SAVE_FORMAT, dice, held, rollsLeft, scores, pokerBonuses, log, rolls, startedAt }));
     } catch (e) {}
   }
 
@@ -42,21 +46,33 @@
     try { localStorage.removeItem(CURRENT_KEY); } catch (e) {}
   }
 
+  const isInt = (n, lo, hi) => Number.isInteger(n) && n >= lo && n <= hi;
+  const isDice = (d) => Array.isArray(d) && d.length === 5 && d.every((x) => isInt(x, 1, 6));
+  const isMask = (m) => Array.isArray(m) && m.length === 5 && m.every((x) => typeof x === "boolean");
+  const isCat = (k) => ALL.some((c) => c.id === k);
+
   /** The saved game, or null if there is none or it is invalid. */
   function loadSaved() {
     let s;
     try { s = JSON.parse(localStorage.getItem(CURRENT_KEY)); } catch (e) { return null; }
-    const isInt = (n, lo, hi) => Number.isInteger(n) && n >= lo && n <= hi;
-    const ok = s && s.v === SAVE_FORMAT &&
-      Array.isArray(s.dice) && s.dice.length === 5 && s.dice.every((d) => isInt(d, 1, 6)) &&
-      Array.isArray(s.held) && s.held.length === 5 && s.held.every((h) => typeof h === "boolean") &&
+    const ok = s && (s.v === 1 || s.v === SAVE_FORMAT) && isDice(s.dice) && isMask(s.held) &&
       isInt(s.rollsLeft, 0, MAX_ROLLS) && isInt(s.pokerBonuses, 0, ALL.length) &&
       s.scores && typeof s.scores === "object" &&
-      Object.entries(s.scores).every(([k, v]) => ALL.some((c) => c.id === k) && isInt(v, 0, 50)) &&
+      Object.entries(s.scores).every(([k, v]) => isCat(k) && isInt(v, 0, 50)) &&
       Object.keys(s.scores).length < ALL.length;
     if (!ok) return null;
+    // Quest tracking is optional: format 1 saves (v1.2.0) have none, and a bad
+    // value only costs quest progress for this game, never the game itself.
+    const rollsUsed = MAX_ROLLS - s.rollsLeft;
+    const log = Array.isArray(s.log) && s.log.every((t) => t && isInt(t.turn, 1, ALL.length) &&
+      isCat(t.cat) && isInt(t.score, 0, 50) && isDice(t.dice) &&
+      (t.rolls === null || (Array.isArray(t.rolls) && t.rolls.length <= MAX_ROLLS && t.rolls.every(isMask))))
+      ? s.log : [];
+    const rolls = Array.isArray(s.rolls) && s.rolls.length === rollsUsed && s.rolls.every(isMask) ? s.rolls : null;
+    const startedAt = Number.isFinite(s.startedAt) ? s.startedAt : null;
     return { dice: s.dice, held: s.rollsLeft === MAX_ROLLS ? s.held.map(() => false) : s.held,
-      rollsLeft: s.rollsLeft, scores: s.scores, pokerBonuses: s.pokerBonuses, rolling: false };
+      rollsLeft: s.rollsLeft, scores: s.scores, pokerBonuses: s.pokerBonuses, rolling: false,
+      log, rolls: rollsUsed === 0 ? [] : rolls, startedAt };
   }
 
   const rollDie = () => 1 + Math.floor(crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 * 6);
@@ -67,6 +83,8 @@
     if (state.rollsLeft === 0 || state.rolling) return;
     state.rollsLeft--;
     state.rolling = true;
+    if (state.startedAt === null && !Object.keys(state.scores).length) state.startedAt = Date.now();
+    if (state.rolls) state.rolls = [...state.rolls, state.held.map((h) => !h)];
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const rolled = state.dice.map((d, i) => (state.held[i] ? d : rollDie()));
     // Save the result now, not after the animation, so reloading mid-roll can't undo it.
@@ -96,13 +114,24 @@
     // Extra five-of-a-kind bonus once a 50 has been banked.
     if (isPoker() && state.scores.poker === 50) state.pokerBonuses++;
     state.scores[id] = score(id, state.dice);
+    state.log.push({ turn: Object.keys(state.scores).length, cat: id, score: state.scores[id],
+      dice: [...state.dice], rolls: state.rolls });
     if (state.scores[id] > 0) Sound.score(state.scores[id]);
     else Sound.scratch();
     state.held = state.held.map(() => false);
     state.rollsLeft = MAX_ROLLS;
+    state.rolls = [];
     if (Object.keys(state.scores).length === ALL.length) return finish();
     persist();
     render();
+    QuestUI.award(Quests.newlyCompleted(questContext(false), QuestUI.done()));
+  }
+
+  function questContext(finished) {
+    const t = totals(state.scores, state.pokerBonuses);
+    return { log: state.log, turn: state.log[state.log.length - 1], scores: state.scores,
+      upperSum: t.upperSum, finished, total: t.total, startedAt: state.startedAt,
+      finishedAt: finished ? Date.now() : null, history: loadHistory() };
   }
 
   function loadHistory() {
@@ -125,16 +154,16 @@
     // The game is recorded in the history below; drop the save so a reload
     // on the game-over dialog can't record it twice.
     clearSaved();
-    render();
     const { total } = totals(state.scores, state.pokerBonuses);
-    let best = 0;
-    try { best = +localStorage.getItem(BEST_KEY) || 0; } catch (e) {}
+    const best = bestScore();
     const record = total > best;
     if (record) { try { localStorage.setItem(BEST_KEY, total); } catch (e) {} }
     $("final").textContent = `You scored ${total} points.` + (record ? " New best!" : ` Best: ${best}.`);
     saveGame(total);
     render();
-    endDlg.showModal();
+    // Quest cards play first; the game-over dialog follows once they are done.
+    QuestUI.award(Quests.newlyCompleted(questContext(true), QuestUI.done()))
+      .then(() => endDlg.showModal());
   }
 
   function renderBest() {

@@ -98,6 +98,14 @@
       notes.forEach((f, i) => tone(t + i * 0.08, f, 0.35, "sine", 0.3));
     },
 
+    /** Sparkle for a completed quest; a longer fanfare for hidden ones. */
+    quest(hidden) {
+      if (!audio()) return;
+      const t = ctx.currentTime;
+      const notes = hidden ? [783.99, 987.77, 1174.66, 1567.98, 1975.53] : [1046.5, 1318.51, 1567.98];
+      notes.forEach((f, i) => tone(t + i * 0.07, f, 0.4, "triangle", 0.22));
+    },
+
     /** Dull downward "bonk" for a zero (scratch). */
     scratch() {
       if (!audio()) return;

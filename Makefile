@@ -21,6 +21,10 @@ bump: ## Release a new version: make bump VERSION=1.2.3
 	@$(MAKE) --no-print-directory check
 	@echo "Bumped to $(VERSION). Deploy all files to publish the update."
 
+.PHONY: test
+test: ## Run the unit tests (scoring and quest rules)
+	@node --test tests/*.test.js
+
 .PHONY: check
 check: ## Verify version.js and sw.js agree and every precached file exists
 	@v1=$$(sed -n 's/^self.APP_VERSION = "\(.*\)";/\1/p' version.js); \

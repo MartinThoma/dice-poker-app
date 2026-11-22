@@ -9,7 +9,7 @@
 "use strict";
 
 // Keep in sync with version.js (`make bump VERSION=x.y.z` updates both).
-const VERSION = "1.2.0";
+const VERSION = "1.3.0";
 const CACHE = "dice-poker-" + VERSION;
 
 const SHELL = [
@@ -19,6 +19,8 @@ const SHELL = [
   "scoring.js",
   "game.js",
   "sound.js",
+  "quests.js",
+  "questui.js",
   "pwa.js",
   "version.js",
   "manifest.webmanifest",

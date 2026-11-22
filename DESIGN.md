@@ -7,6 +7,9 @@
   - `scoring.js`: pure scoring rules with no DOM access. It also exports for Node so the rules can be tested.
   - `game.js`: game state, rendering and the leaderboard.
   - `sound.js`: the generated sound effects and the on/off setting.
+  - `quests.js`: quest definitions and pure checks.
+  - `questui.js`: quest storage, celebrations and the quest list.
+  - `tests/`: Node unit tests for the scoring and quest rules (`make test`).
   - `pwa.js`: install, version and update UI.
   - `sw.js`: the service worker.
   - `version.js`: the version shown to players.
@@ -43,6 +46,9 @@
   - `--accent` `#c0392b`: primary buttons, the gauge bulb and the live leaderboard row. It is also the icon color.
   - `--hold` `#f2b705`: held dice, focus outlines and the #1 rank.
   - `--bg`, `--paper`, `--ink`, `--muted` and `--line`: neutrals.
+  - `--felt-ink` and `--hold-ink`: the green and gold for text. Light mode uses `#1f6b4a` and `#8a6500`; dark mode uses `#5fbf8f` and `#f2b705`.
+    - They exist because `--felt` and `--hold` are surface colors. As text on paper they fail contrast: dark-mode felt is 1.9:1 and light-mode gold is 1.8:1.
+    - All body text meets WCAG AA (4.5:1). Use the `-ink` tokens for links, dates, labels and ranks.
 - **Icon:** a red die showing five, in SVG plus PNG at 192 and 512. There is a maskable variant on felt green with the die inside the safe zone, and an opaque 180px apple-touch icon.
 - **Dice:** CSS-grid pips (a 3×3 grid). Held dice lift by 8px and get a yellow ring. Before the first roll the dice are blank and disabled.
 - **Scorecard:** each open category shows its preview score as a button. Zero-point options are dimmed so scratches are a conscious choice.
@@ -51,6 +57,25 @@
   - Scale: 0 up to the highest score rounded up to the next 50, with a minimum of 200, so the marks don't bunch together.
   - Past-game labels are pushed apart by at least 15px, so a label can sit slightly above its own mark.
 - **Update banner:** a dark bar fixed to the top of the screen, so it can't be missed. The footer holds the version, "Check for updates" and "Install app".
+
+## Quests
+
+- **Split:** the rules (`quests.js`) are pure functions over a context object and are tested in Node (`make test`). The UI (`questui.js`) handles storage, celebrations and the list dialog.
+- **Context:** checked after every scored turn and once more when the game is finished. It holds the turn log, the full scorecard, totals, the start and finish times, and the history (which includes the just-finished game).
+- **Turn log:** each scored turn records `{turn, cat, score, dice, rolls}`. `rolls` has one 5-boolean mask per roll (true = that die was rolled), or `null` if unknown.
+  - The mask is saved in the same `persist()` call as the roll's result, so a reload mid-animation can't desync them.
+  - `turn` is the turn number at scoring time. Order-sensitive quests (Scratch & Survive, The Escalator) use it rather than the position in the log, so a log that starts mid-game can't produce false positives.
+  - Zero Waste reads the scorecard, which is always complete, not the log.
+- **Save format 2** adds `log`, `rolls` and `startedAt` to `dice-poker-current`. Format 1 saves (v1.2.0) still load, with an empty log, unknown rolls for the current turn and an unknown start time. This keeps the promise of the update banner. Bad tracking fields are dropped one by one; they never discard the game.
+- **Storage:** `dice-poker-quests` = `{questId: completedAtMs}`.
+- **Celebrations:** a single promise queue, so toasts and cards never overlap.
+  - On the last turn, `finish()` opens the game-over dialog only after the queue drains. A card shown over a modal dialog would be inert and couldn't be tapped.
+  - Toasts and cards are `popover="manual"` elements, so they render in the top layer. Browsers without popover get a `.open` class instead.
+- **Card:** a 5:7 playing card. The front is the felt-green table look with a gold border, an icon medallion with a gold ring and the name. The back is paper-colored with the name and the condition.
+  - It pops in (scale and rotation, 500ms ease-out-expo, no bounce) and flips with `rotateY(180deg)` after 1.8 seconds.
+  - Under reduced motion there is no pop and no 3D flip; the faces crossfade instead.
+- **Icons:** emoji, so there are no image assets and they adapt to the platform. Done quests show in color with a gold tint, open ones in grayscale, and locked hidden ones as "?".
+- **Header:** the trophy button with the count sits on the left, mirroring the sound button on the right. On screens narrower than 420px the title shrinks to fit between them.
 
 ## Sound
 
