@@ -80,6 +80,7 @@
   - `icons/icon-maskable.svg` puts the die on the felt-green table with a soft drop shadow. The die stays inside the 80% safe zone, so any mask shape leaves it whole. The opaque 180px apple-touch icon is rendered from the same file, because iOS needs an opaque square.
   - `make icons` renders all PNGs from the two SVGs (rsvg-convert and ImageMagick).
 - **Dice:** CSS-grid pips (a 3×3 grid). Held dice lift by 8px and get a yellow ring. Before the first roll the dice are blank and disabled.
+- **Scorecard order:** the upper section, then Three, Four and Five of a Kind together (v1.9.0; Five of a Kind used to sit after Large Straight), then Full House, the straights and Chance. The order lives in `scoring.js` and drives the scorecard and the order of the Perfection quests.
 - **Scorecard:** each open category shows its preview score as a button. Zero-point options are dimmed so scratches are a conscious choice.
 - **Layout:** the board (at most 520px wide) is on the left and the sticky leaderboard is on the right. Below 880px the leaderboard moves under the board. Between 800 and 880px the side column was only about 230px wide, so the names in the list broke after every letter.
 - **Leaderboard gauge:**

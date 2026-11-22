@@ -12,13 +12,14 @@
     { id: "sixes", face: 6 },
   ];
 
+  // Scorecard order: the "of a Kind" boxes together, then the patterns, then Chance.
   const LOWER = [
     { id: "threeKind" },
     { id: "fourKind" },
+    { id: "poker" }, // "Five of a Kind"; the id predates the rename and is kept for saved games and quests
     { id: "fullHouse" },
     { id: "smallStraight" },
     { id: "largeStraight" },
-    { id: "poker" }, // "Five of a Kind"; the id predates the rename and is kept for saved games and quests
     { id: "chance" },
   ];
 

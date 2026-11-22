@@ -22,10 +22,10 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
   | Upper | Bonus | +35 if the upper sum is 63 or more |
   | Lower | Three of a Kind | Sum of all dice if at least 3 match |
   | Lower | Four of a Kind | Sum of all dice if at least 4 match |
+  | Lower | Five of a Kind | 50 for five of a kind |
   | Lower | Full House | 25 for a triple plus a pair (five of a kind does not count) |
   | Lower | Small Straight | 30 for 4 consecutive faces |
   | Lower | Large Straight | 40 for 5 consecutive faces |
-  | Lower | Five of a Kind | 50 for five of a kind |
   | Lower | Chance | Sum of all dice |
   | Extra | Extra five of a kind | +100 for each further five of a kind once the Five of a Kind box holds 50 |
 
