@@ -5,11 +5,11 @@
   "use strict";
   const $ = (id) => document.getElementById(id);
   const banner = $("update-banner");
-  const bannerText = $("update-text");
   const checkBtn = $("check-update");
   const checkStatus = $("update-status");
   const installBtn = $("install");
   const iosHint = $("ios-hint");
+  const { t } = I18n;
 
   $("version").textContent = "v" + (self.APP_VERSION || "?");
 
@@ -49,7 +49,6 @@
   };
 
   function showUpdate() {
-    bannerText.textContent = "A new version is available. Your game in progress is kept.";
     banner.hidden = false;
     checkStatus.textContent = "";
   }
@@ -100,7 +99,7 @@
   async function checkForUpdate(manual) {
     if (!reg || checking) return;
     checking = true;
-    if (manual) checkStatus.textContent = "Checking…";
+    if (manual) checkStatus.textContent = t("update.checking");
     let latest;
     try {
       latest = await latestVersion();
@@ -111,15 +110,15 @@
         if (!known) reg = await navigator.serviceWorker.register(scriptFor(latest), { updateViaCache: "none" });
       }
     } catch (e) {
-      if (manual) checkStatus.textContent = "Could not check (offline?)";
+      if (manual) checkStatus.textContent = t("update.failed");
       return;
     } finally {
       checking = false;
     }
     if (reg.waiting && versionOf(reg.waiting) !== running && navigator.serviceWorker.controller) return showUpdate();
     if (manual) {
-      checkStatus.textContent = latest === running ? "You're up to date"
-        : `Downloading v${latest}…`;
+      checkStatus.textContent = latest === running ? t("update.current")
+        : t("update.downloading", { v: latest });
     }
   }
 

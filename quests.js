@@ -1,4 +1,6 @@
 /* Quest definitions and their pure checks (no DOM, testable in Node).
+ * Names and conditions are translated: locales/*.js hold them as
+ * "quest.<id>.name" and "quest.<id>.text" (see i18n.js).
  *
  * Each check receives a context describing the game right after a category
  * was scored:
@@ -32,44 +34,30 @@
     threeKind: 30, fourKind: 30, fullHouse: 25, smallStraight: 30, largeStraight: 40, poker: 50, chance: 30,
   };
 
-  const CATEGORIES = [
-    { id: "score", label: "Score" },
-    { id: "time", label: "Time" },
-    { id: "special", label: "Specials" },
-    { id: "perfect", label: "Perfection" },
-    { id: "hidden", label: "Hidden" },
-  ];
+  // Quest groups in display order. Labels live in locales/*.js ("questcat.<id>").
+  const CATEGORIES = [{ id: "score" }, { id: "time" }, { id: "special" }, { id: "perfect" }, { id: "hidden" }];
 
   const QUESTS = [
     // Score-based
-    { id: "double-century", cat: "score", icon: "💯", name: "Double Century",
-      text: "Finish a game with 200 points or more.",
+    { id: "double-century", cat: "score", icon: "💯",
       check: (c) => c.finished && c.total >= 200 },
-    { id: "high-roller", cat: "score", icon: "💰", name: "High Roller",
-      text: "Finish a game with 250 points or more.",
+    { id: "high-roller", cat: "score", icon: "💰",
       check: (c) => c.finished && c.total >= 250 },
-    { id: "triple-crown", cat: "score", icon: "👑", name: "Triple Crown",
-      text: "Finish a game with 300 points or more.",
+    { id: "triple-crown", cat: "score", icon: "👑",
       check: (c) => c.finished && c.total >= 300 },
-    { id: "bonus-hunter", cat: "score", icon: "🎁", name: "Bonus Hunter",
-      text: "Earn the upper section bonus (63 points or more in Ones to Sixes).",
+    { id: "bonus-hunter", cat: "score", icon: "🎁",
       check: (c) => c.upperSum >= S.UPPER_BONUS_THRESHOLD },
 
     // Time-based
-    { id: "blitz", cat: "time", icon: "⚡", name: "Blitz",
-      text: "Finish a game in under 3 minutes, from first roll to last score.",
+    { id: "blitz", cat: "time", icon: "⚡",
       check: (c) => c.finished && c.startedAt != null && c.finishedAt - c.startedAt < 3 * 60 * 1000 },
-    { id: "night-owl", cat: "time", icon: "🦉", name: "Night Owl",
-      text: "Finish a game between midnight and 5 am.",
+    { id: "night-owl", cat: "time", icon: "🦉",
       check: (c) => c.finished && hour(c.finishedAt) < 5 },
-    { id: "early-bird", cat: "time", icon: "🐦", name: "Early Bird",
-      text: "Finish a game between 5 am and 8 am.",
+    { id: "early-bird", cat: "time", icon: "🐦",
       check: (c) => c.finished && hour(c.finishedAt) >= 5 && hour(c.finishedAt) < 8 },
-    { id: "triple-header", cat: "time", icon: "🎟️", name: "Triple Header",
-      text: "Finish 3 games on the same day.",
+    { id: "triple-header", cat: "time", icon: "🎟️",
       check: (c) => c.finished && c.history.filter((g) => dayKey(g.date) === dayKey(c.finishedAt)).length >= 3 },
-    { id: "hot-streak", cat: "time", icon: "🔥", name: "Hot Streak",
-      text: "Finish a game on 3 days in a row.",
+    { id: "hot-streak", cat: "time", icon: "🔥",
       check: (c) => {
         if (!c.finished) return false;
         const days = new Set(c.history.map((g) => dayKey(g.date)));
@@ -78,53 +66,43 @@
       } },
 
     // Specials
-    { id: "all-of-a-kind", cat: "special", icon: "🎲", name: "All of a Kind",
-      text: "Score Three of a Kind, Four of a Kind and Dice Poker in the same game (none of them 0).",
+    { id: "all-of-a-kind", cat: "special", icon: "🎲",
       check: (c) => c.scores.threeKind > 0 && c.scores.fourKind > 0 && c.scores.poker > 0 },
 
-    // Perfection: one per box, named from the scorecard labels.
+    // Perfection: one per box, named from the box's scorecard label (see i18n.js).
     ...[...S.UPPER, ...S.LOWER].map((cat) => ({
-      id: "perfect-" + cat.id, cat: "perfect", icon: "⭐", name: "Perfect " + cat.label,
-      text: `Score the maximum of ${PERFECT[cat.id]} points in ${cat.label}.`,
+      id: "perfect-" + cat.id, cat: "perfect", icon: "⭐", box: cat.id, max: PERFECT[cat.id],
       check: (c) => c.turn && c.turn.cat === cat.id && c.turn.score === PERFECT[cat.id],
     })),
 
     // Hidden: names and conditions are only revealed once found.
-    { id: "surgical-strike", cat: "hidden", icon: "🎯", name: "Surgical Strike",
-      text: "Finish the upper section with exactly 63 points: the bonus with 0 points to spare.",
+    { id: "surgical-strike", cat: "hidden", icon: "🎯",
       check: (c) => S.UPPER.every((u) => u.id in c.scores) && c.upperSum === S.UPPER_BONUS_THRESHOLD },
-    { id: "against-all-odds", cat: "hidden", icon: "🍀", name: "Against All Odds",
-      text: "Reroll all 5 dice on your third roll and still land a Full House, Four of a Kind, Large Straight or five of a kind.",
+    { id: "against-all-odds", cat: "hidden", icon: "🍀",
       check: (c) => {
         const r = c.turn && c.turn.rolls;
         if (!r || r.length !== 3 || !r[2].every(Boolean)) return false;
         const d = c.turn.dice;
         return fullHouse(d) || fourKind(d) || largeStraight(d) || fiveKind(d);
       } },
-    { id: "scratch-and-survive", cat: "hidden", icon: "🩹", name: "Scratch & Survive",
-      text: "Take a 0 in the Dice Poker box within your first 6 turns and still finish with more than 225 points.",
+    { id: "scratch-and-survive", cat: "hidden", icon: "🩹",
       check: (c) => c.finished && c.total > 225 &&
         c.log.some((t) => t.cat === "poker" && t.score === 0 && t.turn <= 6) },
-    { id: "all-in", cat: "hidden", icon: "🎰", name: "All-In",
-      text: "Hold only a single die after your first roll and turn it into five of a kind by your third roll.",
+    { id: "all-in", cat: "hidden", icon: "🎰",
       check: (c) => {
         const r = c.turn && c.turn.rolls;
         return !!r && r.length >= 2 && r[1].filter(Boolean).length === 4 && fiveKind(c.turn.dice);
       } },
-    { id: "the-gambler", cat: "hidden", icon: "🃏", name: "The Gambler",
-      text: "Score 25 or more in Chance with at least one One or Two among the dice.",
+    { id: "the-gambler", cat: "hidden", icon: "🃏",
       check: (c) => c.turn && c.turn.cat === "chance" && c.turn.score >= 25 && c.turn.dice.some((d) => d <= 2) },
-    { id: "zero-waste", cat: "hidden", icon: "♻️", name: "Zero Waste",
-      text: "Finish a game without a single 0 on the scorecard.",
+    { id: "zero-waste", cat: "hidden", icon: "♻️",
       check: (c) => c.finished && Object.values(c.scores).every((v) => v > 0) },
-    { id: "twin-peaks", cat: "hidden", icon: "⛰️", name: "Twin Peaks",
-      text: "Roll five of a kind twice in one game: once with a low face (1–3) and once with a high face (4–6).",
+    { id: "twin-peaks", cat: "hidden", icon: "⛰️",
       check: (c) => {
         const faces = c.log.filter((t) => fiveKind(t.dice)).map((t) => t.dice[0]);
         return faces.some((f) => f <= 3) && faces.some((f) => f >= 4);
       } },
-    { id: "the-escalator", cat: "hidden", icon: "📈", name: "The Escalator",
-      text: "Score a Small Straight, then a Large Straight, then a Full House on three turns in a row.",
+    { id: "the-escalator", cat: "hidden", icon: "📈",
       check: (c) => {
         const n = c.log.length;
         if (n < 3) return false;

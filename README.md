@@ -7,8 +7,8 @@ A five-dice game that runs as a static web app and can be installed. See [PRODUC
 ```sh
 make run                  # serve on http://localhost:8000 and the LAN
 make check                # verify versions agree and all precached files exist
-make test                 # unit tests for the scoring and quest rules
-make bump VERSION=1.0.1   # release: bump version.js + sw.js so installed apps update
+make test                 # unit tests for the scoring rules, quest rules and translations
+make bump VERSION=1.0.1   # release: bump version.js, sw.js and the ?v= asset URLs in index.html
 ```
 
 Installing the app, playing offline and receiving updates need HTTPS or `localhost`. The `http://192.168…` LAN address from `make run` serves the game, but browsers won't install or update it from there.
@@ -19,7 +19,7 @@ Every change that should reach players needs `make bump`. Otherwise installed co
 
 * Make the "Live Score" look nicer
 * ~~Add sound when throwing the dice / setting the value - but make it optional~~ (done)
-* Add translations, depending on the browser's language settings - German, English, French, Spanish, Indonesian
+* ~~Add translations, depending on the browser's language settings - German, English, French, Spanish, Indonesian~~ (done, see `locales/`)
 * ~~Allow users to install it. Ensure that it updates when there is a new version available and that the user has an option to see the version~~ (done)
 * ~~Add quests - users should be able to see a few quests, but also add hidden quests. Give each quest a catchy name.~~ (done, see the Quests section in PRODUCT.md)
     * Categories of quests:

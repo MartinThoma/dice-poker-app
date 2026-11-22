@@ -4,6 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert");
 const S = require("../scoring.js");
 const { QUESTS, CATEGORIES, PERFECT, newlyCompleted } = require("../quests.js");
+const I18n = require("../i18n.js");
 
 const ALL_ROLLED = [true, true, true, true, true];
 const quest = (id) => QUESTS.find((q) => q.id === id);
@@ -23,15 +24,15 @@ function ctx(turns, extra = {}) {
 
 test("quest definitions are complete and unique", () => {
   /**
-   * Every quest has a unique id, a name, a condition text, an icon and a known category.
+   * Every quest has a unique id, an icon and a known category.
    *
-   * The quest list dialog and the celebrations rely on all of these fields.
+   * Names and condition texts live in the locales and are checked in i18n.test.js.
    */
   const ids = new Set();
   for (const q of QUESTS) {
     assert.ok(!ids.has(q.id), `duplicate id ${q.id}`);
     ids.add(q.id);
-    assert.ok(q.name && q.text && q.icon, q.id);
+    assert.ok(q.icon, q.id);
     assert.ok(CATEGORIES.some((c) => c.id === q.cat), q.id);
   }
 });
@@ -52,11 +53,18 @@ test("perfect maxima are reachable", () => {
 
 test("perfect quests are named after the scorecard labels", () => {
   /**
-   * Perfection quest names follow the category labels from scoring.js.
+   * Perfection quest names and texts follow each language's box labels.
    *
-   * A renamed category (e.g. "Dice Poker" → "Five of a Kind") renames its quest too.
+   * A renamed box (e.g. "Dice Poker" → "Five of a Kind") renames its quest too.
    */
-  for (const c of [...S.UPPER, ...S.LOWER]) assert.strictEqual(quest("perfect-" + c.id).name, "Perfect " + c.label);
+  for (const lang of I18n.SUPPORTED) {
+    const { t, questName, questText } = I18n.forLang(lang);
+    for (const c of [...S.UPPER, ...S.LOWER]) {
+      const q = quest("perfect-" + c.id);
+      assert.ok(questName(q).includes(t("cat." + c.id)), `${lang} ${c.id}`);
+      assert.ok(questText(q).includes(String(PERFECT[c.id])), `${lang} ${c.id}`);
+    }
+  }
 });
 
 test("surgical strike needs exactly 63 in a complete upper section", () => {

@@ -9,7 +9,8 @@
   - `sound.js`: the generated sound effects and the on/off setting.
   - `quests.js`: quest definitions and pure checks.
   - `questui.js`: quest storage, celebrations and the quest list.
-  - `tests/`: Node unit tests for the scoring and quest rules (`make test`).
+  - `i18n.js` and `locales/<lang>.js`: language detection and all UI text.
+  - `tests/`: Node unit tests for the scoring rules, quest rules and translations (`make test`).
   - `pwa.js`: install, version and update UI.
   - `sw.js`: the service worker.
   - `version.js`: the version shown to players.
@@ -24,13 +25,14 @@
 ## Versioning and updates
 
 - **Version source:** `version.js` holds the version for display (`self.APP_VERSION`). `sw.js` repeats it as `VERSION`, which names its cache.
-  - `make bump VERSION=x.y.z` rewrites both, and `make check` fails if they differ or if a precached file is missing (a missing file would make the whole install fail silently).
+  - `make bump VERSION=x.y.z` rewrites both. `make check` fails if they differ, if a precached file is missing (that would make the whole install fail silently) or if a `<script>` in `index.html` is not precached (that would break offline play).
 - **Release rule:** every change that should reach players needs a version bump. Without one, installed copies keep serving the old cached files.
 - **CDN-proof updates.** The production site (`martin-thoma.com`) sits behind Cloudflare, which caches `.js` files for 4 hours. No request header gets past that, so the classic `registration.update()` kept fetching the old `sw.js` and reported "up to date". The fix relies on a CDN caching per full URL, query string included:
   - **Version check:** the check fetches `version.js?fresh=<timestamp>`. The unique URL always reaches the origin. The service worker never answers `?fresh=` requests from its cache.
   - **Worker URL:** the worker is registered as `sw.js?v=<version>`. When the server reports a different version, the page registers `sw.js?v=<new>`. A new script URL is always fetched fresh, so it installs the new worker even while plain `sw.js` is stale at the CDN.
   - **Silent swap:** a waiting worker whose `?v=` equals the running version (only its URL changed, as when moving from 1.3.0's plain `sw.js`) is activated silently instead of showing the banner.
   - Both URLs are safe to cache at the CDN, because their content never changes for a given version.
+  - **First visits:** `index.html` loads every script and the stylesheet as `<file>?v=<version>`. The CDN never caches HTML, so without this a visitor with no service worker yet could get new HTML with old JavaScript. In 1.4.0 that broke the page, because old `game.js` writes to elements the new HTML no longer has. `make bump` rewrites these queries and `make check` verifies them. The service worker matches with `ignoreSearch`, so the plain precached copies still serve them offline.
 - **Caching:** cache-first, with one cache per version (`dice-poker-<version>`).
   - On install, the worker downloads every file as `<file>?v=<version>` with `cache: "reload"` and stores it under its plain URL. The query keeps stale CDN copies out, and `reload` keeps the browser's HTTP cache out. Without this, a new version could mix in old files.
   - On activate, it deletes the caches of older versions.
@@ -41,6 +43,25 @@
 - **Update checks:** on page load, on `visibilitychange` to visible, hourly, and from the "Check for updates" link. Installed apps can stay open for days, so a check on load alone is not enough.
 - **Relative paths everywhere** (`start_url: "./"`, `scope: "./"`), so the app works from a subpath such as GitHub Pages.
 - **Graceful degradation:** without a service worker (insecure origin, old browser), the version is still shown, and the install and update controls stay hidden.
+
+## Translations
+
+- **One dictionary file per language** (`locales/en.js`, `de.js`, `fr.js`, `es.js`, `id.js`), loaded as classic scripts before `i18n.js`. They are JavaScript rather than JSON because fetching JSON fails from `file://`, and loading them as scripts keeps the startup synchronous. All five are precached, so switching the browser language works offline.
+- **English is the reference.** Every locale must have exactly its keys with the same `{placeholders}`. `make test` enforces this, so a missing translation fails the build instead of silently showing English. At runtime, a missing key falls back to English and then to the key itself.
+- **Keys are flat and keyed by stable ids:** `cat.<boxId>`, `hint.<boxId>`, `quest.<questId>.name` and `.text`, `questcat.<groupId>`.
+  - `scoring.js` and `quests.js` hold ids, icons and rules only, no text.
+  - Perfection quests share one template per language (`quest.perfect.name`, e.g. "Perfekt: {cat}"), filled with the box label. Renaming a box therefore renames its quest in every language.
+- **Plurals:** a value can be an object keyed by `Intl.PluralRules` categories (`one`, `other`, …), selected by `{n}`. A language may use a plural object where English has a plain string (French "restant/restants"). Indonesian only needs `other`.
+- **Detection:** `I18n.detect(navigator.languages)` takes the primary subtag of each entry in order, maps the legacy `in` to `id`, and returns the first supported one, else `en`. There is no in-app picker yet; the roadmap asks for the browser setting.
+- **Applying:** `i18n.js` sets `<html lang>` (for screen-reader voices and hyphenation) and fills every `data-i18n` (text) and `data-i18n-aria-label` element in `index.html`. Text that mixes in live values (the round line, buttons, the leaderboard) is rendered from templates in JavaScript, because word order differs between languages.
+- **Dates** use `toLocaleDateString(I18n.lang, …)`, so they match the UI language rather than the browser's locale.
+- **Word choices:**
+  - The 50-point box stays "Dice Poker" everywhere. Its Spanish name "Póquer" usually means four of a kind in Spanish dice games, so translating it would confuse players.
+  - Generic box names: Dreierpasch/Viererpasch, Brelan/Carré, Trío/Cuatro iguales, Tiga/Empat Kembar.
+  - Quest names are localized idioms rather than literal translations (Surgical Strike → "Punktlandung", All-In → "Tapis", Zero Waste → "Cero ceros").
+  - The iOS install hint quotes the localized Share-menu labels.
+- **The manifest** stays English ("Dice Poker"). A manifest can't be localized, and the name is the same in every language anyway.
+- **Space:** the live leaderboard row has only about 35px for its name at 320px. Below 400px the list uses tighter spacing, names may wrap onto two lines, and `overflow-wrap: anywhere` is a last resort against overflow. The live labels were picked to fit: "Vous (en jeu)" and "Kamu (live)".
 
 ## Visual design
 
@@ -56,7 +77,7 @@
 - **Icon:** a red die showing five, in SVG plus PNG at 192 and 512. There is a maskable variant on felt green with the die inside the safe zone, and an opaque 180px apple-touch icon.
 - **Dice:** CSS-grid pips (a 3×3 grid). Held dice lift by 8px and get a yellow ring. Before the first roll the dice are blank and disabled.
 - **Scorecard:** each open category shows its preview score as a button. Zero-point options are dimmed so scratches are a conscious choice.
-- **Layout:** the board (at most 520px wide) is on the left and the sticky leaderboard is on the right. Below 800px the leaderboard moves under the board.
+- **Layout:** the board (at most 520px wide) is on the left and the sticky leaderboard is on the right. Below 880px the leaderboard moves under the board. Between 800 and 880px the side column was only about 230px wide, so the names in the list broke after every letter.
 - **Leaderboard gauge:**
   - Scale: 0 up to the highest score rounded up to the next 50, with a minimum of 200, so the marks don't bunch together.
   - Past-game labels are pushed apart by at least 15px, so a label can sit slightly above its own mark.

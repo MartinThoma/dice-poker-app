@@ -1,24 +1,25 @@
-/* Pure scoring rules for Dice Poker (five dice, 13 categories). */
+/* Pure scoring rules for Dice Poker (five dice, 13 categories).
+ * Box names and hints are translated: see "cat.<id>" and "hint.<id>" in locales/*.js. */
 (function (root) {
   "use strict";
 
   const UPPER = [
-    { id: "ones", label: "Ones", face: 1 },
-    { id: "twos", label: "Twos", face: 2 },
-    { id: "threes", label: "Threes", face: 3 },
-    { id: "fours", label: "Fours", face: 4 },
-    { id: "fives", label: "Fives", face: 5 },
-    { id: "sixes", label: "Sixes", face: 6 },
+    { id: "ones", face: 1 },
+    { id: "twos", face: 2 },
+    { id: "threes", face: 3 },
+    { id: "fours", face: 4 },
+    { id: "fives", face: 5 },
+    { id: "sixes", face: 6 },
   ];
 
   const LOWER = [
-    { id: "threeKind", label: "Three of a Kind", hint: "Sum of all dice" },
-    { id: "fourKind", label: "Four of a Kind", hint: "Sum of all dice" },
-    { id: "fullHouse", label: "Full House", hint: "25 points" },
-    { id: "smallStraight", label: "Small Straight", hint: "4 in a row, 30 points" },
-    { id: "largeStraight", label: "Large Straight", hint: "5 in a row, 40 points" },
-    { id: "poker", label: "Dice Poker", hint: "Five of a kind, 50 points" },
-    { id: "chance", label: "Chance", hint: "Sum of all dice" },
+    { id: "threeKind" },
+    { id: "fourKind" },
+    { id: "fullHouse" },
+    { id: "smallStraight" },
+    { id: "largeStraight" },
+    { id: "poker" },
+    { id: "chance" },
   ];
 
   const UPPER_BONUS_THRESHOLD = 63;

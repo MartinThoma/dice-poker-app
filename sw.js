@@ -15,7 +15,7 @@
 "use strict";
 
 // Keep in sync with version.js (`make bump VERSION=x.y.z` updates both).
-const VERSION = "1.3.1";
+const VERSION = "1.4.0";
 const CACHE = "dice-poker-" + VERSION;
 
 const SHELL = [
@@ -29,6 +29,12 @@ const SHELL = [
   "questui.js",
   "pwa.js",
   "version.js",
+  "i18n.js",
+  "locales/en.js",
+  "locales/de.js",
+  "locales/fr.js",
+  "locales/es.js",
+  "locales/id.js",
   "manifest.webmanifest",
   "icons/icon.svg",
   "icons/icon-192.png",

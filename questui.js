@@ -7,6 +7,7 @@
   "use strict";
   const KEY = "dice-poker-quests";
   const { QUESTS, CATEGORIES } = Quests;
+  const { t, questName, questText } = I18n;
   const byId = Object.fromEntries(QUESTS.map((q) => [q.id, q]));
   const $ = (id) => document.getElementById(id);
   const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -35,7 +36,7 @@
   async function toast(q) {
     const el = $("quest-toast");
     $("toast-icon").textContent = q.icon;
-    $("toast-name").textContent = q.name;
+    $("toast-name").textContent = questName(q);
     open(el);
     el.classList.remove("leaving");
     await wait(2600);
@@ -47,9 +48,9 @@
   function card(q) {
     const el = $("quest-card");
     $("card-icon").textContent = q.icon;
-    $("card-name").textContent = q.name;
-    $("card-back-name").textContent = q.name;
-    $("card-text").textContent = q.text;
+    $("card-name").textContent = questName(q);
+    $("card-back-name").textContent = questName(q);
+    $("card-text").textContent = questText(q);
     el.classList.remove("flipped");
     open(el);
     return new Promise((resolve) => {
@@ -98,7 +99,7 @@
   function renderBadge() {
     const n = Object.keys(done()).filter((id) => id in byId).length;
     $("quest-count").textContent = `${n}/${QUESTS.length}`;
-    $("quests-btn").setAttribute("aria-label", `Quests: ${n} of ${QUESTS.length} complete`);
+    $("quests-btn").setAttribute("aria-label", t("quests.badge", { n, total: QUESTS.length }));
   }
 
   function tile(q, when) {
@@ -111,15 +112,15 @@
     icon.textContent = hiddenLocked ? "?" : q.icon;
     const body = document.createElement("div");
     const name = document.createElement("strong");
-    name.textContent = hiddenLocked ? "Hidden quest" : q.name;
+    name.textContent = hiddenLocked ? t("quest.locked") : questName(q);
     const text = document.createElement("p");
-    text.textContent = hiddenLocked ? "Keep playing to discover it." : q.text;
+    text.textContent = hiddenLocked ? t("quest.lockedText") : questText(q);
     body.append(name, text);
     if (when) {
-      const t = document.createElement("time");
-      t.dateTime = new Date(when).toISOString();
-      t.textContent = "✓ " + new Date(when).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-      body.append(t);
+      const time = document.createElement("time");
+      time.dateTime = new Date(when).toISOString();
+      time.textContent = "✓ " + new Date(when).toLocaleDateString(I18n.lang, { month: "short", day: "numeric", year: "numeric" });
+      body.append(time);
     }
     li.append(icon, body);
     return li;
@@ -128,16 +129,16 @@
   function renderList() {
     const d = done();
     const total = Object.keys(d).filter((id) => id in byId).length;
-    $("quests-summary").textContent = `${total} of ${QUESTS.length} complete`;
+    $("quests-summary").textContent = t("quests.summary", { n: total, total: QUESTS.length });
     $("quests-list").replaceChildren(...CATEGORIES.map((cat) => {
       const qs = QUESTS.filter((q) => q.cat === cat.id);
       const n = qs.filter((q) => q.id in d).length;
       const sec = document.createElement("section");
       const h = document.createElement("h3");
-      h.textContent = cat.label;
+      h.textContent = t("questcat." + cat.id);
       const c = document.createElement("span");
       c.className = "q-count";
-      c.textContent = cat.id === "hidden" ? `${n} of ${qs.length} found` : `${n}/${qs.length}`;
+      c.textContent = cat.id === "hidden" ? t("quests.found", { n, total: qs.length }) : `${n}/${qs.length}`;
       h.append(c);
       const ul = document.createElement("ul");
       ul.className = "quests" + (cat.id === "perfect" ? " compact" : "");

@@ -1,6 +1,8 @@
 (function () {
   "use strict";
   const { UPPER, LOWER, UPPER_BONUS_THRESHOLD, UPPER_BONUS, score, totals } = Scoring;
+  const { t } = I18n;
+  const label = (cat) => t("cat." + cat.id);
   const ALL = [...UPPER, ...LOWER];
   const MAX_ROLLS = 3;
   const BEST_KEY = "dice-poker-best";
@@ -128,9 +130,9 @@
   }
 
   function questContext(finished) {
-    const t = totals(state.scores, state.pokerBonuses);
+    const tot = totals(state.scores, state.pokerBonuses);
     return { log: state.log, turn: state.log[state.log.length - 1], scores: state.scores,
-      upperSum: t.upperSum, finished, total: t.total, startedAt: state.startedAt,
+      upperSum: tot.upperSum, finished, total: tot.total, startedAt: state.startedAt,
       finishedAt: finished ? Date.now() : null, history: loadHistory() };
   }
 
@@ -158,7 +160,7 @@
     const best = bestScore();
     const record = total > best;
     if (record) { try { localStorage.setItem(BEST_KEY, total); } catch (e) {} }
-    $("final").textContent = `You scored ${total} points.` + (record ? " New best!" : ` Best: ${best}.`);
+    $("final").textContent = t("end.scored", { n: total }) + " " + (record ? t("end.newBest") : t("end.best", { best }));
     saveGame(total);
     render();
     // Quest cards play first; the game-over dialog follows once they are done.
@@ -166,10 +168,8 @@
       .then(() => endDlg.showModal());
   }
 
-  function renderBest() {
-    let best = 0;
-    try { best = +localStorage.getItem(BEST_KEY) || 0; } catch (e) {}
-    $("best").textContent = best || "–";
+  function renderSub() {
+    $("sub").textContent = t("sub", { round: Math.min(round(), 13), best: bestScore() || "–" });
   }
 
   function renderDice() {
@@ -178,7 +178,7 @@
       b.type = "button";
       b.className = "die" + (state.held[i] ? " held" : "");
       b.setAttribute("aria-pressed", state.held[i]);
-      b.setAttribute("aria-label", `Die ${i + 1}: ${v}${state.held[i] ? ", held" : ""}`);
+      b.setAttribute("aria-label", t(state.held[i] ? "die.labelHeld" : "die.label", { i: i + 1, v }));
       b.disabled = !hasRolled();
       if (!hasRolled()) b.classList.add("blank");
       for (let p = 1; p <= 9; p++) {
@@ -193,23 +193,20 @@
 
   function renderControls() {
     rollBtn.disabled = state.rollsLeft === 0 || state.rolling;
-    rollBtn.textContent = state.rollsLeft === MAX_ROLLS ? "Roll dice" : `Roll again (${state.rollsLeft} left)`;
-    statusEl.textContent = !hasRolled() ? "Roll to start your turn."
-      : state.rollsLeft === 0 ? "No rolls left. Pick a category." : "Hold dice, roll again or score.";
-    $("round").textContent = Math.min(round(), 13);
+    rollBtn.textContent = state.rollsLeft === MAX_ROLLS ? t("roll.first") : t("roll.again", { n: state.rollsLeft });
+    statusEl.textContent = t(!hasRolled() ? "status.start" : state.rollsLeft === 0 ? "status.noRolls" : "status.choose");
+    renderSub();
   }
 
-  function row(cat, extraHint) {
+  function row(cat) {
     const tr = document.createElement("tr");
     const taken = cat.id in state.scores;
     const th = document.createElement("th");
     th.scope = "row";
-    th.textContent = cat.label;
-    if (cat.hint || extraHint) {
-      const h = document.createElement("small");
-      h.textContent = cat.hint || extraHint;
-      th.append(h);
-    }
+    th.textContent = label(cat);
+    const h = document.createElement("small");
+    h.textContent = cat.face ? t("hint.upper", { face: cat.face }) : t("hint." + cat.id);
+    th.append(h);
     const td = document.createElement("td");
     if (taken) {
       td.textContent = state.scores[cat.id];
@@ -220,7 +217,7 @@
       const pts = score(cat.id, state.dice);
       btn.textContent = pts;
       btn.className = "option" + (pts === 0 ? " zero" : "");
-      btn.setAttribute("aria-label", `Score ${pts} in ${cat.label}`);
+      btn.setAttribute("aria-label", t("option.label", { pts, cat: label(cat) }));
       btn.addEventListener("click", () => choose(cat.id));
       td.append(btn);
     }
@@ -238,16 +235,16 @@
   }
 
   function renderCard() {
-    const t = totals(state.scores, state.pokerBonuses);
+    const tot = totals(state.scores, state.pokerBonuses);
     const body = document.createElement("tbody");
     body.append(
-      ...UPPER.map((c) => row(c, `Total of ${c.label.toLowerCase()}`)),
-      sumRow(`Bonus (${UPPER_BONUS_THRESHOLD}+ upper = ${UPPER_BONUS})`,
-        `${t.upperSum}/${UPPER_BONUS_THRESHOLD}` + (t.bonus ? ` +${t.bonus}` : "")),
-      ...LOWER.map((c) => row(c)),
+      ...UPPER.map(row),
+      sumRow(t("row.bonus", { threshold: UPPER_BONUS_THRESHOLD, bonus: UPPER_BONUS }),
+        `${tot.upperSum}/${UPPER_BONUS_THRESHOLD}` + (tot.bonus ? ` +${tot.bonus}` : "")),
+      ...LOWER.map(row),
     );
-    if (state.pokerBonuses) body.append(sumRow("Extra Dice Poker (+100 each)", `+${t.extra}`));
-    body.append(sumRow("Total", t.total, "grand"));
+    if (state.pokerBonuses) body.append(sumRow(t("row.extra"), `+${tot.extra}`));
+    body.append(sumRow(t("row.total"), tot.total, "grand"));
     cardEl.replaceChildren(body);
   }
 
@@ -268,13 +265,13 @@
       gauge.style.setProperty("--fill", pct(total) / 100);
       gauge.setAttribute("aria-valuemax", scale);
       gauge.setAttribute("aria-valuenow", total);
-      gauge.setAttribute("aria-valuetext", `${total} points, rank ${rank} of ${hist.length + 1}`);
+      gauge.setAttribute("aria-valuetext", t("gauge.value", { total, rank, count: hist.length + 1 }));
       renderMarks(hist, total, live, pct);
       renderBoard(hist, total, live, rank);
-      $("rank").textContent = !hist.length ? "Finish a game to start your leaderboard."
-        : live ? (rank === 1 && total > 0 ? `Leading with ${total}! Ahead of all ${hist.length} past games.`
-          : `Now #${rank} of ${hist.length + 1} with ${total} points.`)
-        : `Game over: you placed #${1 + hist.slice(1).filter((g) => g.score > hist[0].score).length}.`;
+      $("rank").textContent = !hist.length ? t("rank.empty")
+        : live ? (rank === 1 && total > 0 ? t("rank.leading", { total, n: hist.length })
+          : t("rank.now", { rank, count: hist.length + 1, total }))
+        : t("rank.placed", { rank: 1 + hist.slice(1).filter((g) => g.score > hist[0].score).length });
     };
 
     // Animate rows swapping places when the live score overtakes a past game.
@@ -288,7 +285,7 @@
   function renderMarks(hist, total, live, pct) {
     // Past games as ticks on the gauge, labels nudged apart so they don't overlap.
     const items = hist.map((g, i) => ({ score: g.score, label: String(g.score), cls: i === 0 && !live ? "latest" : "" }));
-    if (live) items.push({ score: total, label: "You " + total, cls: "you" });
+    if (live) items.push({ score: total, label: t("gauge.you", { total }), cls: "you" });
     items.sort((a, b) => a.score - b.score);
     let prev = -Infinity;
     $("marks").replaceChildren(...items.map((it) => {
@@ -299,10 +296,10 @@
       m.className = "mark " + it.cls;
       m.style.setProperty("--y", y + "px");
       m.style.setProperty("--ly", labelY + "px");
-      const t = document.createElement("span");
-      t.className = "label";
-      t.textContent = it.label;
-      m.append(t);
+      const lbl = document.createElement("span");
+      lbl.className = "label";
+      lbl.textContent = it.label;
+      m.append(lbl);
       return m;
     }));
   }
@@ -311,7 +308,7 @@
     const rows = hist.map((g, i) => ({ score: g.score, date: g.date, id: "g" + g.date + "-" + i, latest: i === 0 && !live }));
     rows.sort((a, b) => b.score - a.score);
     if (live) rows.splice(rank - 1, 0, { score: total, id: "live", you: true });
-    const fmt = (d) => new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const fmt = (d) => new Date(d).toLocaleDateString(I18n.lang, { month: "short", day: "numeric" });
     $("leaderboard").replaceChildren(...rows.map((r, i) => {
       const li = document.createElement("li");
       li.className = (r.you ? "you" : "") + (r.latest ? " latest" : "");
@@ -321,7 +318,7 @@
       pos.textContent = i + 1;
       const who = document.createElement("span");
       who.className = "who";
-      who.textContent = r.you ? "You (live)" : r.latest ? "Just now" : fmt(r.date);
+      who.textContent = r.you ? t("lb.you") : r.latest ? t("lb.justNow") : fmt(r.date);
       const sc = document.createElement("strong");
       sc.textContent = r.score;
       li.append(pos, who, sc);
@@ -334,15 +331,14 @@
     renderDice();
     renderControls();
     renderCard();
-    renderBest();
   }
 
   const soundBtn = $("sound");
   function renderSound() {
     const on = Sound.enabled;
     soundBtn.setAttribute("aria-pressed", on);
-    soundBtn.setAttribute("aria-label", on ? "Sound on" : "Sound off");
-    soundBtn.title = on ? "Sound on: click to mute" : "Sound off: click to unmute";
+    soundBtn.setAttribute("aria-label", t(on ? "sound.on" : "sound.off"));
+    soundBtn.title = t(on ? "sound.onTitle" : "sound.offTitle");
   }
   soundBtn.addEventListener("click", () => {
     Sound.setEnabled(!Sound.enabled);

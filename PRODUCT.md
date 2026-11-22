@@ -86,6 +86,15 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
 - Sound is optional. A speaker button in the header turns it on or off, and the choice is remembered on the device. Sound is on by default.
 - No audio files: every sound is generated in the browser, so there is nothing to license or download.
 
+## Languages
+
+- The game is available in English, German, French, Spanish and Indonesian.
+- The language follows the browser's language settings: the first supported language in the player's list wins (`de-AT` counts as German). If none is supported, the game uses English.
+- Everything the player reads or hears from a screen reader is translated. This includes box names, hints, quests, the leaderboard, dates and the update and install texts.
+- The name "Dice Poker" stays the same in every language: it is the app's name and also the name of the 50-point box.
+- The naming rule above applies to every language. No translation uses the local brand name of a dice game.
+- Every language fits on a 320px-wide phone without horizontal scrolling.
+
 ## App, install and updates
 
 - The game can be installed as an app (home screen or desktop) on browsers that support it. If the browser offers an install prompt, an "Install app" button is shown. On iOS, a hint explains "Share → Add to Home Screen".
