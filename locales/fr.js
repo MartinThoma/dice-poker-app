@@ -107,6 +107,8 @@
     "quest.hot-streak.text": "Terminez une partie 3 jours de suite.",
     "quest.all-of-a-kind.name": "Famille au complet",
     "quest.all-of-a-kind.text": "Marquez Brelan, Carré et Dice Poker dans la même partie (aucun à 0).",
+    "quest.hard-choice.name": "L’embarras du choix",
+    "quest.hard-choice.text": "Obtenez cinq 6 alors qu’au moins deux cases parmi Six, Brelan, Carré, Dice Poker et Chance sont encore libres, dont Six ou Chance.",
     "quest.surgical-strike.name": "Frappe chirurgicale",
     "quest.surgical-strike.text": "Terminez la partie haute avec exactement 63 points : le bonus sans un point de marge.",
     "quest.against-all-odds.name": "Contre toute attente",

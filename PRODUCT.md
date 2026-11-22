@@ -45,7 +45,7 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
 
 ## Quests
 
-- There are 36 quests in 6 groups. A trophy button in the header shows the progress (e.g. "4/36") and opens the quest list.
+- There are 37 quests in 6 groups. A trophy button in the header shows the progress (e.g. "4/37") and opens the quest list.
 - Quest progress is stored on the device. A quest is completed once and stays completed.
 - **Celebration:**
   - A visible quest shows a short toast ("Quest complete · <name>").
@@ -70,6 +70,7 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
 | Time | Triple Header | Finish 3 games on the same day |
 | Time | Hot Streak | Finish a game on 3 days in a row |
 | Specials | All of a Kind | Three of a Kind, Four of a Kind and Dice Poker all scored above 0 in one game |
+| Specials | Hard Choice | A turn ends on five Sixes while at least two of Sixes, Three of a Kind, Four of a Kind, Dice Poker and Chance are open, including Sixes or Chance (with only the kinds and Dice Poker open, the choice is clear) |
 | Perfection | Perfect *X* (13 quests) | Score a box's maximum: Ones 5 … Sixes 30, Three/Four of a Kind 30, Full House 25, Small Straight 30, Large Straight 40, Dice Poker 50, Chance 30 |
 | Hidden | Surgical Strike | Upper section complete with exactly 63 |
 | Hidden | Against All Odds | Third roll with all 5 dice rerolled lands a Full House, Four of a Kind, Large Straight or five of a kind (in any box) |

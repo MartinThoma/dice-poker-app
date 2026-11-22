@@ -107,6 +107,8 @@
     "quest.hot-streak.text": "Beende an 3 Tagen hintereinander ein Spiel.",
     "quest.all-of-a-kind.name": "Paschsammler",
     "quest.all-of-a-kind.text": "Trage Dreierpasch, Viererpasch und Dice Poker im selben Spiel ein (keins davon mit 0).",
+    "quest.hard-choice.name": "Die Qual der Wahl",
+    "quest.hard-choice.text": "Würfle fünf Sechsen, während noch mindestens zwei von Sechser, Dreierpasch, Viererpasch, Dice Poker und Chance offen sind, darunter Sechser oder Chance.",
     "quest.surgical-strike.name": "Punktlandung",
     "quest.surgical-strike.text": "Beende den oberen Teil mit genau 63 Punkten: der Bonus ohne einen Punkt Reserve.",
     "quest.against-all-odds.name": "Gegen alle Chancen",

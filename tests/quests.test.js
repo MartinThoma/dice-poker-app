@@ -254,3 +254,25 @@ test("lowball needs five ones in chance", () => {
   assert.ok(!quest("lowball").check(ctx([{ cat: "chance", dice: [1, 1, 1, 1, 2] }])));
   assert.ok(!quest("lowball").check(ctx([{ cat: "threeKind", dice: [1, 1, 1, 1, 1] }])), "only Chance counts");
 });
+
+test("hard choice needs a real choice for five sixes", () => {
+  /**
+   * Hard Choice triggers for five Sixes with at least two fitting boxes open, one of them Sixes or Chance.
+   *
+   * Fitting boxes: Sixes, Three of a Kind, Four of a Kind, Dice Poker, Chance. With only the
+   * kinds and Dice Poker open the choice is clear, so that does not count.
+   */
+  const q = quest("hard-choice");
+  const six = [6, 6, 6, 6, 6];
+  const filled = (cats) => cats.map((cat) => ({ cat, dice: [1, 2, 3, 4, 6] }));
+  assert.ok(q.check(ctx([{ cat: "chance", dice: six }])), "everything open");
+  assert.ok(q.check(ctx([...filled(["threeKind", "fourKind", "chance"]), { cat: "sixes", dice: six }])),
+    "Sixes or Dice Poker");
+  assert.ok(q.check(ctx([...filled(["sixes", "threeKind", "fourKind"]), { cat: "chance", dice: six }])),
+    "Chance or Dice Poker");
+  assert.ok(!q.check(ctx([...filled(["sixes", "chance"]), { cat: "poker", dice: six }])),
+    "only the kinds and Dice Poker: the choice is clear");
+  assert.ok(!q.check(ctx([...filled(["sixes", "threeKind", "fourKind", "poker"]), { cat: "chance", dice: six }])),
+    "only Chance left");
+  assert.ok(!q.check(ctx([{ cat: "chance", dice: [5, 5, 5, 5, 5] }])), "five Fives");
+});

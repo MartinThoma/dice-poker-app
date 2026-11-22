@@ -107,6 +107,8 @@
     "quest.hot-streak.text": "Selesaikan permainan 3 hari berturut-turut.",
     "quest.all-of-a-kind.name": "Serba Kembar",
     "quest.all-of-a-kind.text": "Catat Tiga Kembar, Empat Kembar, dan Dice Poker dalam satu permainan (tidak ada yang 0).",
+    "quest.hard-choice.name": "Pilihan Sulit",
+    "quest.hard-choice.text": "Dapatkan lima angka 6 saat setidaknya dua dari Enam, Tiga Kembar, Empat Kembar, Dice Poker, dan Bebas masih kosong, termasuk Enam atau Bebas.",
     "quest.surgical-strike.name": "Tepat Sasaran",
     "quest.surgical-strike.text": "Selesaikan bagian atas dengan tepat 63 poin: bonus tanpa sisa satu poin pun.",
     "quest.against-all-odds.name": "Melawan Takdir",

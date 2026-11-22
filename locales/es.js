@@ -109,6 +109,8 @@
     "quest.hot-streak.text": "Termina una partida 3 días seguidos.",
     "quest.all-of-a-kind.name": "Todos iguales",
     "quest.all-of-a-kind.text": "Anota Trío, Cuatro iguales y Dice Poker en la misma partida (ninguno con 0).",
+    "quest.hard-choice.name": "Difícil elección",
+    "quest.hard-choice.text": "Saca cinco seises cuando aún quedan libres al menos dos de Seises, Trío, Cuatro iguales, Dice Poker y Azar, entre ellas Seises o Azar.",
     "quest.surgical-strike.name": "Precisión quirúrgica",
     "quest.surgical-strike.text": "Termina la parte superior con exactamente 63 puntos: el bono sin un punto de sobra.",
     "quest.against-all-odds.name": "Contra todo pronóstico",

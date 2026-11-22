@@ -41,6 +41,9 @@
   // 5 with five Ones) and every other box can be scratched.
   const LOWEST = 5;
 
+  // Boxes where five Sixes score well (Hard Choice).
+  const HARD_CHOICE = ["sixes", "threeKind", "fourKind", "poker", "chance"];
+
   const QUESTS = [
     // Score-based
     { id: "double-century", cat: "score", icon: "💯",
@@ -82,6 +85,15 @@
     // Specials
     { id: "all-of-a-kind", cat: "special", icon: "🎲",
       check: (c) => c.scores.threeKind > 0 && c.scores.fourKind > 0 && c.scores.poker > 0 },
+    // Five Sixes fit Sixes, Three/Four of a Kind, Dice Poker and Chance. With only the
+    // kinds and Dice Poker open the choice is clear, so Sixes or Chance must be open too.
+    { id: "hard-choice", cat: "special", icon: "⚖️",
+      check: (c) => {
+        if (!c.turn || !c.turn.dice.every((d) => d === 6)) return false;
+        // Open before this turn: unscored boxes plus the one just scored.
+        const open = HARD_CHOICE.filter((id) => !(id in c.scores) || id === c.turn.cat);
+        return open.length >= 2 && (open.includes("sixes") || open.includes("chance"));
+      } },
 
     // Perfection: one per box, named from the box's scorecard label (see i18n.js).
     ...[...S.UPPER, ...S.LOWER].map((cat) => ({

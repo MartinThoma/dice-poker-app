@@ -110,6 +110,8 @@
     "quest.hot-streak.text": "Finish a game on 3 days in a row.",
     "quest.all-of-a-kind.name": "All of a Kind",
     "quest.all-of-a-kind.text": "Score Three of a Kind, Four of a Kind and Dice Poker in the same game (none of them 0).",
+    "quest.hard-choice.name": "Hard Choice",
+    "quest.hard-choice.text": "Roll five Sixes while at least two of Sixes, Three of a Kind, Four of a Kind, Dice Poker and Chance are still open, including Sixes or Chance.",
     "quest.surgical-strike.name": "Surgical Strike",
     "quest.surgical-strike.text": "Finish the upper section with exactly 63 points: the bonus with 0 points to spare.",
     "quest.against-all-odds.name": "Against All Odds",
