@@ -45,7 +45,7 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
 
 ## Quests
 
-- There are 31 quests in 5 groups. A trophy button in the header shows the progress (e.g. "4/31") and opens the quest list.
+- There are 36 quests in 6 groups. A trophy button in the header shows the progress (e.g. "4/36") and opens the quest list.
 - Quest progress is stored on the device. A quest is completed once and stays completed.
 - **Celebration:**
   - A visible quest shows a short toast ("Quest complete · <name>").
@@ -60,6 +60,10 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
 | Score | High Roller | Finish a game with 250+ points |
 | Score | Triple Crown | Finish a game with 300+ points |
 | Score | Bonus Hunter | Earn the upper section bonus |
+| Low scores | Rock Bottom | Finish a game with fewer than 100 points |
+| Low scores | Limbo | Finish a game with fewer than 50 points |
+| Low scores | Clean Slate | Finish a game with a 0 in at least 10 boxes |
+| Low scores | Lowball | Exactly 5 in Chance (five Ones) |
 | Time | Blitz | Finish a game in under 3 minutes (first roll to last score) |
 | Time | Night Owl | Finish a game between midnight and 5 am |
 | Time | Early Bird | Finish a game between 5 am and 8 am |
@@ -75,7 +79,9 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
 | Hidden | Zero Waste | Finish a game with no 0 on the scorecard |
 | Hidden | Twin Peaks | Five of a kind twice in one game (in any boxes), once with a face of 1–3 and once with 4–6 |
 | Hidden | The Escalator | Small Straight, Large Straight, Full House on three consecutive turns, none of them 0 |
+| Hidden | Wooden Spoon | Finish a game with exactly 5 points, the lowest score possible |
 
+- **Low scores** reward a game gone badly, or one lost on purpose. The lowest possible final score is 5: Chance always holds the sum of the dice (at least 5, with five Ones), and every other box can be scratched.
 - **Perfection names** come from the scorecard labels, so renaming a box renames its quest.
 - **Changed from the roadmap:** The Gambler originally asked for "25+ in Chance using at least three Ones or Twos". That is impossible, because the maximum is 2+2+2+6+6 = 18.
 - **Games in progress from v1.2.0:** turns played before the update have no roll records. Quests that depend on them (Blitz; Against All Odds and All-In for the turn interrupted by the update) can't trigger for that game, but every later game tracks them fully.

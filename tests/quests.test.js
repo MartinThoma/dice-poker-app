@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert");
 const S = require("../scoring.js");
-const { QUESTS, CATEGORIES, PERFECT, newlyCompleted } = require("../quests.js");
+const { QUESTS, CATEGORIES, PERFECT, LOWEST, newlyCompleted } = require("../quests.js");
 const I18n = require("../i18n.js");
 
 const ALL_ROLLED = [true, true, true, true, true];
@@ -199,4 +199,58 @@ test("completed quests are not reported again", () => {
   const c = ctx([{ cat: "chance", dice: [6, 6, 6, 6, 6] }]);
   assert.ok(newlyCompleted(c, {}).includes("perfect-chance"));
   assert.ok(!newlyCompleted(c, { "perfect-chance": 1 }).includes("perfect-chance"));
+});
+
+/** A finished game with every box scratched except Chance, which holds `chance`. */
+function lowestGame(chance) {
+  const without = (face) => [1, 2, 3, 4, 5, 6].filter((f) => f !== face).slice(0, 4).concat([face === 6 ? 5 : 6]);
+  const turns = [...S.UPPER.map((c) => ({ cat: c.id, dice: without(c.face) })),
+    ...["threeKind", "fourKind", "fullHouse", "smallStraight", "largeStraight", "poker"].map((cat) => ({ cat, dice: [1, 2, 3, 5, 6] })),
+    { cat: "chance", dice: chance }];
+  return ctx(turns, { finishedAt: new Date(2026, 10, 20, 12).getTime() });
+}
+
+test("the lowest possible score is reachable and earns the wooden spoon", () => {
+  /**
+   * A game with every box scratched and five Ones in Chance finishes with exactly 5 points.
+   *
+   * Chance always holds the dice sum, so 5 is the floor; that game completes every low-score quest.
+   */
+  const c = lowestGame([1, 1, 1, 1, 1]);
+  assert.strictEqual(c.total, 5);
+  assert.strictEqual(c.total, LOWEST);
+  assert.deepStrictEqual(newlyCompleted(c, {}).sort(),
+    ["clean-slate", "limbo", "lowball", "rock-bottom", "wooden-spoon"]);
+  assert.ok(!quest("wooden-spoon").check(lowestGame([1, 1, 1, 1, 2])), "6 points is not the floor");
+});
+
+test("low score quests use strict thresholds on finished games", () => {
+  /**
+   * Rock Bottom needs fewer than 100 points and Limbo fewer than 50, both only once the game is over.
+   */
+  assert.ok(quest("rock-bottom").check({ finished: true, total: 99 }));
+  assert.ok(!quest("rock-bottom").check({ finished: true, total: 100 }));
+  assert.ok(!quest("rock-bottom").check({ finished: false, total: 20 }), "a game in progress is always low");
+  assert.ok(quest("limbo").check({ finished: true, total: 49 }));
+  assert.ok(!quest("limbo").check({ finished: true, total: 50 }));
+});
+
+test("clean slate counts zeros on the whole scorecard", () => {
+  /**
+   * Clean Slate needs a finished game with a 0 in at least 10 of the 13 boxes.
+   */
+  const ids = [...S.UPPER, ...S.LOWER].map((c) => c.id);
+  const card = (zeros) => Object.fromEntries(ids.map((id, i) => [id, i < zeros ? 0 : 5]));
+  assert.ok(quest("clean-slate").check({ finished: true, scores: card(10) }));
+  assert.ok(!quest("clean-slate").check({ finished: true, scores: card(9) }));
+  assert.ok(!quest("clean-slate").check({ finished: false, scores: card(12) }));
+});
+
+test("lowball needs five ones in chance", () => {
+  /**
+   * Lowball triggers for exactly 5 points in Chance, during the game.
+   */
+  assert.ok(quest("lowball").check(ctx([{ cat: "chance", dice: [1, 1, 1, 1, 1] }])));
+  assert.ok(!quest("lowball").check(ctx([{ cat: "chance", dice: [1, 1, 1, 1, 2] }])));
+  assert.ok(!quest("lowball").check(ctx([{ cat: "threeKind", dice: [1, 1, 1, 1, 1] }])), "only Chance counts");
 });

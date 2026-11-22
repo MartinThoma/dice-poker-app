@@ -38,5 +38,6 @@ Every change that should reach players needs `make bump`. Otherwise installed co
     * Specific quests
         * All of a kind: 3-, 4- and 5-of-a-kind
         
+* ~~Add quests for very low scores~~ (done: Rock Bottom, Limbo, Clean Slate, Lowball and the hidden Wooden Spoon)
 * Add a cheering sound and a firework anymation when "Dice Poker" is won - also rename it to "five of a kind"
 * Show a "loading bar" for the bonus

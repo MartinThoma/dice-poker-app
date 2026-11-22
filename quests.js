@@ -35,7 +35,11 @@
   };
 
   // Quest groups in display order. Labels live in locales/*.js ("questcat.<id>").
-  const CATEGORIES = [{ id: "score" }, { id: "time" }, { id: "special" }, { id: "perfect" }, { id: "hidden" }];
+  const CATEGORIES = [{ id: "score" }, { id: "low" }, { id: "time" }, { id: "special" }, { id: "perfect" }, { id: "hidden" }];
+
+  // Lowest possible final score: Chance always holds the dice sum (at least
+  // 5 with five Ones) and every other box can be scratched.
+  const LOWEST = 5;
 
   const QUESTS = [
     // Score-based
@@ -47,6 +51,16 @@
       check: (c) => c.finished && c.total >= 300 },
     { id: "bonus-hunter", cat: "score", icon: "🎁",
       check: (c) => c.upperSum >= S.UPPER_BONUS_THRESHOLD },
+
+    // Low scores: rewards for a game gone badly (or lost on purpose).
+    { id: "rock-bottom", cat: "low", icon: "🪨",
+      check: (c) => c.finished && c.total < 100 },
+    { id: "limbo", cat: "low", icon: "🕺",
+      check: (c) => c.finished && c.total < 50 },
+    { id: "clean-slate", cat: "low", icon: "🧽",
+      check: (c) => c.finished && Object.values(c.scores).filter((v) => v === 0).length >= 10 },
+    { id: "lowball", cat: "low", icon: "🐌",
+      check: (c) => c.turn && c.turn.cat === "chance" && c.turn.score === LOWEST },
 
     // Time-based
     { id: "blitz", cat: "time", icon: "⚡",
@@ -110,6 +124,8 @@
         return a.cat === "smallStraight" && b.cat === "largeStraight" && d.cat === "fullHouse" &&
           a.score > 0 && b.score > 0 && d.score > 0 && b.turn === a.turn + 1 && d.turn === b.turn + 1;
       } },
+    { id: "wooden-spoon", cat: "hidden", icon: "🥄",
+      check: (c) => c.finished && c.total === LOWEST },
   ];
 
   /** Ids of quests not in `done` whose condition holds for context `c`. */
@@ -117,7 +133,7 @@
     return QUESTS.filter((q) => !(q.id in done) && q.check(c)).map((q) => q.id);
   }
 
-  const api = { QUESTS, CATEGORIES, PERFECT, newlyCompleted };
+  const api = { QUESTS, CATEGORIES, PERFECT, LOWEST, newlyCompleted };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.Quests = api;
 })(typeof window !== "undefined" ? window : globalThis);
