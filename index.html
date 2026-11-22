@@ -22,6 +22,13 @@
   </div>
   <main>
     <header>
+      <button id="sound" type="button" class="icon-btn" aria-pressed="true" aria-label="Sound on">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/>
+          <path class="on" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>
+          <path class="off" d="m16 9 6 6m0-6-6 6"/>
+        </svg>
+      </button>
       <h1>Dice Poker</h1>
       <p class="sub">Round <span id="round">1</span> of 13 · Best: <span id="best">–</span></p>
     </header>
@@ -74,6 +81,7 @@
   </main>
   <script src="version.js"></script>
   <script src="scoring.js"></script>
+  <script src="sound.js"></script>
   <script src="game.js"></script>
   <script src="pwa.js"></script>
 </body>

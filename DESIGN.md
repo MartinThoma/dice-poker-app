@@ -6,6 +6,7 @@
 - **Files:**
   - `scoring.js`: pure scoring rules with no DOM access. It also exports for Node so the rules can be tested.
   - `game.js`: game state, rendering and the leaderboard.
+  - `sound.js`: the generated sound effects and the on/off setting.
   - `pwa.js`: install, version and update UI.
   - `sw.js`: the service worker.
   - `version.js`: the version shown to players.
@@ -44,6 +45,17 @@
   - Scale: 0 up to the highest score rounded up to the next 50, with a minimum of 200, so the marks don't bunch together.
   - Past-game labels are pushed apart by at least 15px, so a label can sit slightly above its own mark.
 - **Update banner:** a dark bar fixed to the top of the screen, so it can't be missed. The footer holds the version, "Check for updates" and "Install app".
+
+## Sound
+
+- **Generated, not recorded.** `sound.js` builds every effect with the Web Audio API, so there are no audio assets, no licensing questions and nothing extra to precache.
+  - **Roll:** band-passed white-noise clicks spread over about 350ms (the rattle), then a low click per rolled die (landing). The length matches the 450ms tumble animation.
+  - **Hold/release:** a 70ms triangle tick, higher (880Hz) when holding and lower (620Hz) when releasing.
+  - **Score:** a sine arpeggio on C major notes: 2 notes normally, 3 for 25 points or more, 4 for 40 or more.
+  - **Scratch:** a triangle tone gliding down from 220Hz to 110Hz.
+- **The `AudioContext` is created on the first sound**, which always happens inside a click, so autoplay rules never block it. Turning sound off suspends it.
+- **Setting:** `localStorage` key `dice-poker-sound` (`on`/`off`). The default is on, because every sound is triggered by the player's own action.
+- **Toggle:** a 44px round speaker button at the top right of the header, using `aria-pressed`. The icon shows sound waves when on and an × when off.
 
 ## Motion
 

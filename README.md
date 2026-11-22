@@ -17,7 +17,7 @@ Every change that should reach players needs `make bump`. Otherwise installed co
 ## Roadmap
 
 * Make the "Live Score" look nicer
-* Add sound when throwing the dice / setting the value - but make it optional
+* ~~Add sound when throwing the dice / setting the value - but make it optional~~ (done)
 * Add translations, depending on the browser's language settings - German, English, French, Spanish, Indonesian
 * ~~Allow users to install it. Ensure that it updates when there is a new version available and that the user has an option to see the version~~ (done)
 * Add quests - users should be able to see a few quests, but also add hidden quests. Give each quest a catchy name.

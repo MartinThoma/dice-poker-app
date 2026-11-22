@@ -40,6 +40,12 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
   - a ranked list of the past games, with a "You (live)" row at the current rank that moves up as the player overtakes games;
   - a one-line summary of the current rank.
 
+## Sound
+
+- Sound effects play when rolling (a rattle, then one thump per die rolled), when holding or releasing a die (a tick), when banking points (a chime that gets longer for 25+ and 40+ points) and when scratching a zero (a dull "bonk").
+- Sound is optional. A speaker button in the header turns it on or off, and the choice is remembered on the device. Sound is on by default.
+- No audio files: every sound is generated in the browser, so there is nothing to license or download.
+
 ## App, install and updates
 
 - The game can be installed as an app (home screen or desktop) on browsers that support it. If the browser offers an install prompt, an "Install app" button is shown. On iOS, a hint explains "Share → Add to Home Screen".

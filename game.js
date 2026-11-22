@@ -34,6 +34,7 @@
     state.rolling = true;
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const rolled = state.dice.map((d, i) => (state.held[i] ? d : rollDie()));
+    Sound.roll(state.held.filter((h) => !h).length);
     state.dice.forEach((_, i) => { if (!state.held[i]) diceEl.children[i].classList.add("rolling"); });
     setTimeout(() => {
       state.dice = rolled;
@@ -46,6 +47,7 @@
   function toggleHold(i) {
     if (!hasRolled() || state.rolling || state.rollsLeft === MAX_ROLLS) return;
     state.held[i] = !state.held[i];
+    Sound.hold(state.held[i]);
     render();
   }
 
@@ -56,6 +58,8 @@
     // Extra five-of-a-kind bonus once a 50 has been banked.
     if (isPoker() && state.scores.poker === 50) state.pokerBonuses++;
     state.scores[id] = score(id, state.dice);
+    if (state.scores[id] > 0) Sound.score(state.scores[id]);
+    else Sound.scratch();
     state.held = state.held.map(() => false);
     state.rollsLeft = MAX_ROLLS;
     if (Object.keys(state.scores).length === ALL.length) return finish();
@@ -266,6 +270,20 @@
   window.DicePoker = {
     gameInProgress: () => hasRolled() || Object.keys(state.scores).length > 0,
   };
+
+  const soundBtn = $("sound");
+  function renderSound() {
+    const on = Sound.enabled;
+    soundBtn.setAttribute("aria-pressed", on);
+    soundBtn.setAttribute("aria-label", on ? "Sound on" : "Sound off");
+    soundBtn.title = on ? "Sound on: click to mute" : "Sound off: click to unmute";
+  }
+  soundBtn.addEventListener("click", () => {
+    Sound.setEnabled(!Sound.enabled);
+    renderSound();
+    Sound.hold(true); // audible confirmation when turning sound on
+  });
+  renderSound();
 
   rollBtn.addEventListener("click", roll);
   endDlg.addEventListener("close", newGame);
