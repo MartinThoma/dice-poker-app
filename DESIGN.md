@@ -23,12 +23,16 @@
 
 ## Versioning and updates
 
-- **Version source:** `version.js` holds the version for display (`self.APP_VERSION`). `sw.js` repeats it as `VERSION`.
-  - Repeating it in `sw.js` matters: the browser only installs a new service worker if `sw.js` itself changes byte for byte, so every release must change that file.
+- **Version source:** `version.js` holds the version for display (`self.APP_VERSION`). `sw.js` repeats it as `VERSION`, which names its cache.
   - `make bump VERSION=x.y.z` rewrites both, and `make check` fails if they differ or if a precached file is missing (a missing file would make the whole install fail silently).
 - **Release rule:** every change that should reach players needs a version bump. Without one, installed copies keep serving the old cached files.
+- **CDN-proof updates.** The production site (`martin-thoma.com`) sits behind Cloudflare, which caches `.js` files for 4 hours. No request header gets past that, so the classic `registration.update()` kept fetching the old `sw.js` and reported "up to date". The fix relies on a CDN caching per full URL, query string included:
+  - **Version check:** the check fetches `version.js?fresh=<timestamp>`. The unique URL always reaches the origin. The service worker never answers `?fresh=` requests from its cache.
+  - **Worker URL:** the worker is registered as `sw.js?v=<version>`. When the server reports a different version, the page registers `sw.js?v=<new>`. A new script URL is always fetched fresh, so it installs the new worker even while plain `sw.js` is stale at the CDN.
+  - **Silent swap:** a waiting worker whose `?v=` equals the running version (only its URL changed, as when moving from 1.3.0's plain `sw.js`) is activated silently instead of showing the banner.
+  - Both URLs are safe to cache at the CDN, because their content never changes for a given version.
 - **Caching:** cache-first, with one cache per version (`dice-poker-<version>`).
-  - On install, the worker precaches the app shell with `cache: "reload"` so it never stores stale files from the HTTP cache.
+  - On install, the worker downloads every file as `<file>?v=<version>` with `cache: "reload"` and stores it under its plain URL. The query keeps stale CDN copies out, and `reload` keeps the browser's HTTP cache out. Without this, a new version could mix in old files.
   - On activate, it deletes the caches of older versions.
   - If the network fails, page loads fall back to the cached `index.html`.
 - **Update flow:** the new worker installs and then waits; it never calls `skipWaiting()` by itself.

@@ -1,15 +1,21 @@
 /* Service worker: makes Dice Poker installable and playable offline.
  *
- * Update model: the browser re-downloads this file when the page loads and
- * when the page calls registration.update(). Any byte change (e.g. VERSION)
- * installs a new worker, which precaches the new files into a fresh cache and
- * then waits. The page shows "Update available"; when the player accepts, the
- * page posts SKIP_WAITING, the new worker takes over and the page reloads.
+ * Update model: the page registers this file as "sw.js?v=<version>". To check
+ * for updates it fetches version.js with a unique query string (so no CDN can
+ * answer with an old copy) and, if the version differs, registers
+ * "sw.js?v=<new version>". The new worker precaches the new files into a fresh
+ * cache and then waits. The page shows "Update available"; when the player
+ * accepts, the page posts SKIP_WAITING, the new worker takes over and the page
+ * reloads.
+ *
+ * Every file is downloaded as "<file>?v=<version>" and stored under its plain
+ * URL: a CDN caches per full URL, so a new version never picks up a stale copy
+ * of an old file.
  */
 "use strict";
 
 // Keep in sync with version.js (`make bump VERSION=x.y.z` updates both).
-const VERSION = "1.3.0";
+const VERSION = "1.3.1";
 const CACHE = "dice-poker-" + VERSION;
 
 const SHELL = [
@@ -32,11 +38,14 @@ const SHELL = [
 ];
 
 self.addEventListener("install", (event) => {
-  // cache: "reload" bypasses the HTTP cache so a new version never precaches stale files.
+  // ?v= bypasses CDN caches, cache: "reload" the browser's HTTP cache.
+  const versioned = (url) => url + (url.includes("?") ? "&" : "?") + "v=" + encodeURIComponent(VERSION);
   event.waitUntil(
-    caches.open(CACHE).then((cache) =>
-      cache.addAll(SHELL.map((url) => new Request(url, { cache: "reload" })))
-    )
+    caches.open(CACHE).then((cache) => Promise.all(SHELL.map(async (url) => {
+      const res = await fetch(new Request(versioned(url), { cache: "reload" }));
+      if (!res.ok) throw new Error(`Precaching ${url} failed: HTTP ${res.status}`);
+      await cache.put(url, res);
+    })))
   );
 });
 
@@ -57,7 +66,9 @@ self.addEventListener("message", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
+  const url = new URL(req.url);
+  if (req.method !== "GET" || url.origin !== self.location.origin) return;
+  if (url.searchParams.has("fresh")) return; // update checks always go to the network
   event.respondWith(
     caches.open(CACHE).then(async (cache) => {
       const hit = await cache.match(req, { ignoreSearch: true });
