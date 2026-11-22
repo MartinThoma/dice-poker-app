@@ -11,6 +11,12 @@
   - `sw.js`: the service worker.
   - `version.js`: the version shown to players.
 - **Storage:** `localStorage` keys `dice-poker-best` (number) and `dice-poker-history` (newest first, at most 10 entries of `{score, date}`). Every access is wrapped in try/catch, so the game still runs when storage is blocked.
+- **Game in progress:** saved under `dice-poker-current` as `{v, dice, held, rollsLeft, scores, pokerBonuses}`.
+  - It is written after every action (roll, hold, score). A roll is saved the moment the button is clicked, with the final dice, before the 450ms animation. That way a reload mid-animation can't undo it.
+  - On load, the save is validated field by field (dice 1–6, 5 booleans for holds, known category ids, fewer than 13 scores). Anything invalid or unparseable is ignored, and a fresh game starts.
+  - `v` is a save-format number, separate from the app version, so app updates keep saved games. Bump `SAVE_FORMAT` in `game.js` only when the shape changes. Older saves are then discarded.
+  - The save is removed when a game finishes, before it is written to the history. A reload on the game-over dialog therefore can't record the game twice.
+  - Using `localStorage` (rather than `sessionStorage`) means the game also survives closing the tab or the installed app.
 
 ## Versioning and updates
 

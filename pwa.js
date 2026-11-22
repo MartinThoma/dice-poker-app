@@ -43,8 +43,7 @@
   let reg = null;
 
   function showUpdate() {
-    const playing = window.DicePoker && window.DicePoker.gameInProgress();
-    bannerText.textContent = "A new version is available." + (playing ? " Updating restarts the current game." : "");
+    bannerText.textContent = "A new version is available. Your game in progress is kept.";
     banner.hidden = false;
     checkStatus.textContent = "";
   }

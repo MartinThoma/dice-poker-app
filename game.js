@@ -6,7 +6,9 @@
   const BEST_KEY = "dice-poker-best";
   const HISTORY_KEY = "dice-poker-history";
   const HISTORY_MAX = 10;
-  const SCALE_MAX = 400;
+  const CURRENT_KEY = "dice-poker-current";
+  // Bump when the saved shape changes; older saves are then discarded.
+  const SAVE_FORMAT = 1;
 
   const PIPS = {
     1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9],
@@ -18,10 +20,43 @@
 
   let state;
 
+  const freshState = () => ({ dice: [1, 1, 1, 1, 1], held: [false, false, false, false, false],
+    rollsLeft: MAX_ROLLS, scores: {}, pokerBonuses: 0, rolling: false });
+
   function newGame() {
-    state = { dice: [1, 1, 1, 1, 1], held: [false, false, false, false, false],
-      rollsLeft: MAX_ROLLS, scores: {}, pokerBonuses: 0, rolling: false };
+    state = freshState();
+    clearSaved();
     render();
+  }
+
+  /* ---------- Game in progress survives reloads ---------- */
+
+  function persist(s) {
+    const { dice, held, rollsLeft, scores, pokerBonuses } = s || state;
+    try {
+      localStorage.setItem(CURRENT_KEY, JSON.stringify({ v: SAVE_FORMAT, dice, held, rollsLeft, scores, pokerBonuses }));
+    } catch (e) {}
+  }
+
+  function clearSaved() {
+    try { localStorage.removeItem(CURRENT_KEY); } catch (e) {}
+  }
+
+  /** The saved game, or null if there is none or it is invalid. */
+  function loadSaved() {
+    let s;
+    try { s = JSON.parse(localStorage.getItem(CURRENT_KEY)); } catch (e) { return null; }
+    const isInt = (n, lo, hi) => Number.isInteger(n) && n >= lo && n <= hi;
+    const ok = s && s.v === SAVE_FORMAT &&
+      Array.isArray(s.dice) && s.dice.length === 5 && s.dice.every((d) => isInt(d, 1, 6)) &&
+      Array.isArray(s.held) && s.held.length === 5 && s.held.every((h) => typeof h === "boolean") &&
+      isInt(s.rollsLeft, 0, MAX_ROLLS) && isInt(s.pokerBonuses, 0, ALL.length) &&
+      s.scores && typeof s.scores === "object" &&
+      Object.entries(s.scores).every(([k, v]) => ALL.some((c) => c.id === k) && isInt(v, 0, 50)) &&
+      Object.keys(s.scores).length < ALL.length;
+    if (!ok) return null;
+    return { dice: s.dice, held: s.rollsLeft === MAX_ROLLS ? s.held.map(() => false) : s.held,
+      rollsLeft: s.rollsLeft, scores: s.scores, pokerBonuses: s.pokerBonuses, rolling: false };
   }
 
   const rollDie = () => 1 + Math.floor(crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 * 6);
@@ -34,6 +69,8 @@
     state.rolling = true;
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const rolled = state.dice.map((d, i) => (state.held[i] ? d : rollDie()));
+    // Save the result now, not after the animation, so reloading mid-roll can't undo it.
+    persist({ ...state, dice: rolled });
     Sound.roll(state.held.filter((h) => !h).length);
     state.dice.forEach((_, i) => { if (!state.held[i]) diceEl.children[i].classList.add("rolling"); });
     setTimeout(() => {
@@ -48,6 +85,7 @@
     if (!hasRolled() || state.rolling || state.rollsLeft === MAX_ROLLS) return;
     state.held[i] = !state.held[i];
     Sound.hold(state.held[i]);
+    persist();
     render();
   }
 
@@ -63,6 +101,7 @@
     state.held = state.held.map(() => false);
     state.rollsLeft = MAX_ROLLS;
     if (Object.keys(state.scores).length === ALL.length) return finish();
+    persist();
     render();
   }
 
@@ -83,6 +122,9 @@
   }
 
   function finish() {
+    // The game is recorded in the history below; drop the save so a reload
+    // on the game-over dialog can't record it twice.
+    clearSaved();
     render();
     const { total } = totals(state.scores, state.pokerBonuses);
     let best = 0;
@@ -266,11 +308,6 @@
     renderBest();
   }
 
-  // Read by pwa.js to warn that applying an update restarts the current game.
-  window.DicePoker = {
-    gameInProgress: () => hasRolled() || Object.keys(state.scores).length > 0,
-  };
-
   const soundBtn = $("sound");
   function renderSound() {
     const on = Sound.enabled;
@@ -287,5 +324,6 @@
 
   rollBtn.addEventListener("click", roll);
   endDlg.addEventListener("close", newGame);
-  newGame();
+  state = loadSaved() || freshState();
+  render();
 })();

@@ -30,6 +30,9 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
 
 - Dice use a cryptographically secure random source.
 - When the game ends, a dialog shows the final score and whether it is a new best, and offers a new game.
+- The game in progress is never lost on refresh, tab close or app update. Reloading restores the dice, held dice, rolls left and the scorecard.
+  - Reloading during the roll animation keeps that roll: refreshing can't be used to re-roll.
+  - A finished game is recorded exactly once, even if the page is reloaded while the game-over dialog is open. A new game starts after such a reload.
 
 ## Leaderboard
 
@@ -52,7 +55,7 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
 - Once loaded, the game works fully offline.
 - The current version is always visible in the footer (e.g. "v1.0.0").
 - The player can trigger "Check for updates" manually. The app also checks automatically when it is opened, when it returns to the foreground and once an hour while open.
-- When a new version is available, a banner offers "Update" or "Later". Updating never happens silently in the middle of a game, and if a game is in progress the banner says that updating restarts it.
+- When a new version is available, a banner offers "Update" or "Later". Updating never happens silently, and the game in progress is kept across the update.
 - Install, offline play and updates need HTTPS or `localhost`. Over plain HTTP on a LAN address the game still works, but these features are unavailable.
 
 ## Platform
