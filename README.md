@@ -8,6 +8,7 @@ A five-dice game that runs as a static web app and can be installed. See [PRODUC
 make run                  # serve on http://localhost:8000 and the LAN
 make check                # verify versions agree and all precached files exist
 make test                 # unit tests for the scoring rules, quest rules and translations
+make icons                # re-render the PNG icons from icons/*.svg
 make bump VERSION=1.0.1   # release: bump version.js, sw.js and the ?v= asset URLs in index.html
 ```
 

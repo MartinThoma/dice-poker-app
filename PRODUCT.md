@@ -107,6 +107,7 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
 
 - The game can be installed as an app (home screen or desktop) on browsers that support it. If the browser offers an install prompt, an "Install app" button is shown. On iOS, a hint explains "Share → Add to Home Screen".
 - Once loaded, the game works fully offline.
+- The app icon is a white die with black pips showing five. On the home screen it sits on the green table color.
 - The current version is always visible in the footer (e.g. "v1.0.0").
 - The player can trigger "Check for updates" manually. The app also checks automatically when it is opened, when it returns to the foreground and once an hour while open.
 - When a new version is available, a banner offers "Update" or "Later". Updating never happens silently, and the game in progress is kept across the update.

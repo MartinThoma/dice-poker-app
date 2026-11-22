@@ -9,6 +9,13 @@ run: ## Serve the game on all interfaces and print the URLs
 	echo "Press Ctrl+C to stop."; \
 	python3 -m http.server $(PORT) --bind 0.0.0.0 2>&1 | grep -v '"GET '
 
+.PHONY: icons
+icons: ## Render the PNG icons from icons/*.svg (needs rsvg-convert and ImageMagick)
+	rsvg-convert -w 192 -h 192 icons/icon.svg -o icons/icon-192.png
+	rsvg-convert -w 512 -h 512 icons/icon.svg -o icons/icon-512.png
+	rsvg-convert -w 512 -h 512 icons/icon-maskable.svg | convert - -alpha off icons/icon-maskable-512.png
+	rsvg-convert -w 180 -h 180 icons/icon-maskable.svg | convert - -alpha off icons/apple-touch-icon.png
+
 .PHONY: version
 version: ## Print the current app version
 	@sed -n 's/^self.APP_VERSION = "\(.*\)";/\1/p' version.js

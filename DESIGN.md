@@ -69,13 +69,16 @@
 - **Theme:** a casino table. The dice sit on a green felt panel with a radial gradient, and the scorecard and leaderboard are paper-colored cards on a warm beige background.
 - **Color tokens** (on `:root`, redefined for dark mode):
   - `--felt` `#1f6b4a`: table, focus and "available" accents. It is also the manifest `theme_color`.
-  - `--accent` `#c0392b`: primary buttons, the gauge bulb and the live leaderboard row. It is also the icon color.
+  - `--accent` `#c0392b`: primary buttons, the gauge bulb and the live leaderboard row.
   - `--hold` `#f2b705`: held dice, focus outlines and the #1 rank.
   - `--bg`, `--paper`, `--ink`, `--muted` and `--line`: neutrals.
   - `--felt-ink` and `--hold-ink`: the green and gold for text. Light mode uses `#1f6b4a` and `#8a6500`; dark mode uses `#5fbf8f` and `#f2b705`.
     - They exist because `--felt` and `--hold` are surface colors. As text on paper they fail contrast: dark-mode felt is 1.9:1 and light-mode gold is 1.8:1.
     - All body text meets WCAG AA (4.5:1). Use the `-ink` tokens for links, dates, labels and ranks.
-- **Icon:** a red die showing five, in SVG plus PNG at 192 and 512. There is a maskable variant on felt green with the die inside the safe zone, and an opaque 180px apple-touch icon.
+- **Icon:** a white die with black pips showing five, like a real die (v1.8.0; before, it was red with white pips).
+  - `icons/icon.svg` (favicon, and the 192/512 PNGs) has a transparent background and a thin near-black outline. Without the outline a white die would vanish in light browser tabs and on light home screens.
+  - `icons/icon-maskable.svg` puts the die on the felt-green table with a soft drop shadow. The die stays inside the 80% safe zone, so any mask shape leaves it whole. The opaque 180px apple-touch icon is rendered from the same file, because iOS needs an opaque square.
+  - `make icons` renders all PNGs from the two SVGs (rsvg-convert and ImageMagick).
 - **Dice:** CSS-grid pips (a 3×3 grid). Held dice lift by 8px and get a yellow ring. Before the first roll the dice are blank and disabled.
 - **Scorecard:** each open category shows its preview score as a button. Zero-point options are dimmed so scratches are a conscious choice.
 - **Layout:** the board (at most 520px wide) is on the left and the sticky leaderboard is on the right. Below 880px the leaderboard moves under the board. Between 800 and 880px the side column was only about 230px wide, so the names in the list broke after every letter.
