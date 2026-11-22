@@ -28,7 +28,7 @@ Every change that should reach players needs `make bump`. Otherwise installed co
         * Hidden quests: When achieving those, a small card-like animation should be shown (e.g. a pop-up card with the quest name and a visualization of the quest name; after a short time, the backside of the card is shown with the condition)
             * Surgical Strike: Hit the exact 63-point Upper Section bonus threshold with 0 points to spare.
             * Against All Odds: Reroll all 5 dice on your final roll and still land a Full House or better.
-            * Scratch & Survive: Voluntarily take a 0 in the Dice Poker box early, and still finish the game with over 225 points.
+            * Scratch & Survive: Voluntarily take a 0 in the Five of a Kind box early, and still finish the game with over 225 points.
             * All-In: Hold only a single die after Roll 1 and turn it into five of a kind by Roll 3.
             * The Gambler: Score 25 or more points in "Chance" using at least one One or Two. (Originally "at least three Ones or Twos", which is impossible: 2+2+2+6+6 = 18.)
             * Zero Waste: Finish an entire 13-round game without taking a single 0 (scratch) in any category.
@@ -39,5 +39,5 @@ Every change that should reach players needs `make bump`. Otherwise installed co
         * All of a kind: 3-, 4- and 5-of-a-kind
         
 * ~~Add quests for very low scores~~ (done: Rock Bottom, Limbo, Clean Slate, Lowball and the hidden Wooden Spoon)
-* Add a cheering sound and a firework anymation when "Dice Poker" is won - also rename it to "five of a kind"
+* Add a cheering sound and a firework anymation when five of a kind is rolled - ~~also rename the "Dice Poker" box to "Five of a Kind"~~ (renamed in v1.7.0)
 * Show a "loading bar" for the bonus

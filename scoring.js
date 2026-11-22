@@ -18,7 +18,7 @@
     { id: "fullHouse" },
     { id: "smallStraight" },
     { id: "largeStraight" },
-    { id: "poker" },
+    { id: "poker" }, // "Five of a Kind"; the id predates the rename and is kept for saved games and quests
     { id: "chance" },
   ];
 

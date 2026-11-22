@@ -55,7 +55,7 @@ test("perfect quests are named after the scorecard labels", () => {
   /**
    * Perfection quest names and texts follow each language's box labels.
    *
-   * A renamed box (e.g. "Dice Poker" → "Five of a Kind") renames its quest too.
+   * A renamed box (e.g. "Dice Poker" → "Five of a Kind" in v1.7.0) renames its quest too.
    */
   for (const lang of I18n.SUPPORTED) {
     const { t, questName, questText } = I18n.forLang(lang);
@@ -141,9 +141,9 @@ test("the escalator needs three consecutive non-zero turns in order", () => {
   assert.ok(!q.check(ctx(turns.map((t, i) => ({ ...t, turn: [1, 2, 4][i] })))), "gap between turns");
 });
 
-test("scratch and survive needs an early zero in the dice poker box", () => {
+test("scratch and survive needs an early zero in the five of a kind box", () => {
   /**
-   * Scratch & Survive triggers for a 0 in Dice Poker within 6 turns and a final total above 225.
+   * Scratch & Survive triggers for a 0 in Five of a Kind within 6 turns and a final total above 225.
    */
   const q = quest("scratch-and-survive");
   const early = { log: [{ turn: 3, cat: "poker", score: 0, dice: [1, 2, 3, 4, 6], rolls: null }],
@@ -259,19 +259,19 @@ test("hard choice needs a real choice for five sixes", () => {
   /**
    * Hard Choice triggers for five Sixes with at least two fitting boxes open, one of them Sixes or Chance.
    *
-   * Fitting boxes: Sixes, Three of a Kind, Four of a Kind, Dice Poker, Chance. With only the
-   * kinds and Dice Poker open the choice is clear, so that does not count.
+   * Fitting boxes: Sixes, Three/Four/Five of a Kind, Chance. With only the "of a Kind"
+   * boxes open the choice is clear, so that does not count.
    */
   const q = quest("hard-choice");
   const six = [6, 6, 6, 6, 6];
   const filled = (cats) => cats.map((cat) => ({ cat, dice: [1, 2, 3, 4, 6] }));
   assert.ok(q.check(ctx([{ cat: "chance", dice: six }])), "everything open");
   assert.ok(q.check(ctx([...filled(["threeKind", "fourKind", "chance"]), { cat: "sixes", dice: six }])),
-    "Sixes or Dice Poker");
+    "Sixes or Five of a Kind");
   assert.ok(q.check(ctx([...filled(["sixes", "threeKind", "fourKind"]), { cat: "chance", dice: six }])),
-    "Chance or Dice Poker");
+    "Chance or Five of a Kind");
   assert.ok(!q.check(ctx([...filled(["sixes", "chance"]), { cat: "poker", dice: six }])),
-    "only the kinds and Dice Poker: the choice is clear");
+    "only the of-a-kind boxes: the choice is clear");
   assert.ok(!q.check(ctx([...filled(["sixes", "threeKind", "fourKind", "poker"]), { cat: "chance", dice: six }])),
     "only Chance left");
   assert.ok(!q.check(ctx([{ cat: "chance", dice: [5, 5, 5, 5, 5] }])), "five Fives");

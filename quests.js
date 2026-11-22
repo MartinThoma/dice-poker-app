@@ -85,8 +85,8 @@
     // Specials
     { id: "all-of-a-kind", cat: "special", icon: "🎲",
       check: (c) => c.scores.threeKind > 0 && c.scores.fourKind > 0 && c.scores.poker > 0 },
-    // Five Sixes fit Sixes, Three/Four of a Kind, Dice Poker and Chance. With only the
-    // kinds and Dice Poker open the choice is clear, so Sixes or Chance must be open too.
+    // Five Sixes fit Sixes, Three/Four/Five of a Kind and Chance. With only the
+    // "of a Kind" boxes open the choice is clear, so Sixes or Chance must be open too.
     { id: "hard-choice", cat: "special", icon: "⚖️",
       check: (c) => {
         if (!c.turn || !c.turn.dice.every((d) => d === 6)) return false;

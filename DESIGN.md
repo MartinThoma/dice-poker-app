@@ -56,7 +56,8 @@
 - **Applying:** `i18n.js` sets `<html lang>` (for screen-reader voices and hyphenation) and fills every `data-i18n` (text) and `data-i18n-aria-label` element in `index.html`. Text that mixes in live values (the round line, buttons, the leaderboard) is rendered from templates in JavaScript, because word order differs between languages.
 - **Dates** use `toLocaleDateString(I18n.lang, …)`, so they match the UI language rather than the browser's locale.
 - **Word choices:**
-  - The 50-point box stays "Dice Poker" everywhere. Its Spanish name "Póquer" usually means four of a kind in Spanish dice games, so translating it would confuse players.
+  - The 50-point box is "Five of a Kind" (since v1.7.0; before, it shared the app's name "Dice Poker", which was confusing). Each language uses its plain term for five equal dice, matching its names for three and four of a kind: Fünferpasch, Cinq identiques, Cinco iguales, Lima Kembar. Spanish avoids "Póquer", which in Spanish dice games usually means four of a kind.
+  - Its internal id stays `poker` (and `pokerBonuses`, `perfect-poker`): saved games and completed quests refer to it, so renaming the id would need a migration for no visible gain.
   - Generic box names: Dreierpasch/Viererpasch, Brelan/Carré, Trío/Cuatro iguales, Tiga/Empat Kembar.
   - Quest names are localized idioms rather than literal translations (Surgical Strike → "Punktlandung", All-In → "Tapis", Zero Waste → "Cero ceros").
   - The iOS install hint quotes the localized Share-menu labels.

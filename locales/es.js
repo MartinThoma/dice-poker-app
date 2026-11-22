@@ -1,6 +1,6 @@
 /* Spanish UI strings. Keys and placeholders mirror locales/en.js.
  * "Póquer" is avoided as a box name: in Spanish dice games it usually means
- * four of a kind, so the 50-point box keeps the product name "Dice Poker". */
+ * four of a kind, so the 50-point box is "Cinco iguales". */
 (function (root) {
   "use strict";
   const m = {
@@ -35,7 +35,7 @@
     "cat.fullHouse": "Full",
     "cat.smallStraight": "Escalera corta",
     "cat.largeStraight": "Escalera larga",
-    "cat.poker": "Dice Poker",
+    "cat.poker": "Cinco iguales",
     "cat.chance": "Azar",
     "hint.upper": "Suma de todos los {face}",
     "hint.threeKind": "Suma de todos los dados",
@@ -43,7 +43,7 @@
     "hint.fullHouse": "25 puntos",
     "hint.smallStraight": "4 seguidos, 30 puntos",
     "hint.largeStraight": "5 seguidos, 40 puntos",
-    "hint.poker": "Cinco iguales, 50 puntos",
+    "hint.poker": "50 puntos",
     "hint.chance": "Suma de todos los dados",
     "option.label": "Anotar {pts} en {cat}",
     "row.bonus": "Bono ({threshold}+ arriba = {bonus})",
@@ -108,15 +108,15 @@
     "quest.hot-streak.name": "En racha",
     "quest.hot-streak.text": "Termina una partida 3 días seguidos.",
     "quest.all-of-a-kind.name": "Todos iguales",
-    "quest.all-of-a-kind.text": "Anota Trío, Cuatro iguales y Dice Poker en la misma partida (ninguno con 0).",
+    "quest.all-of-a-kind.text": "Anota Trío, Cuatro iguales y Cinco iguales en la misma partida (ninguno con 0).",
     "quest.hard-choice.name": "Difícil elección",
-    "quest.hard-choice.text": "Saca cinco seises cuando aún quedan libres al menos dos de Seises, Trío, Cuatro iguales, Dice Poker y Azar, entre ellas Seises o Azar.",
+    "quest.hard-choice.text": "Saca cinco seises cuando aún quedan libres al menos dos de Seises, Trío, Cuatro iguales, Cinco iguales y Azar, entre ellas Seises o Azar.",
     "quest.surgical-strike.name": "Precisión quirúrgica",
     "quest.surgical-strike.text": "Termina la parte superior con exactamente 63 puntos: el bono sin un punto de sobra.",
     "quest.against-all-odds.name": "Contra todo pronóstico",
     "quest.against-all-odds.text": "Vuelve a tirar los 5 dados en tu tercera tirada y consigue aun así un Full, Cuatro iguales, Escalera larga o cinco iguales.",
     "quest.scratch-and-survive.name": "Tachar y sobrevivir",
-    "quest.scratch-and-survive.text": "Anota un 0 en Dice Poker en tus primeros 6 turnos y termina aun así con más de 225 puntos.",
+    "quest.scratch-and-survive.text": "Anota un 0 en Cinco iguales en tus primeros 6 turnos y termina aun así con más de 225 puntos.",
     "quest.all-in.name": "Todo o nada",
     "quest.all-in.text": "Guarda un solo dado tras tu primera tirada y conviértelo en cinco iguales antes de tu tercera tirada.",
     "quest.the-gambler.name": "El tahúr",

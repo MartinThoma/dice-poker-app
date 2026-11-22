@@ -4,7 +4,8 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
 
 ## Naming
 
-- The game, its categories and all texts use generic names only ("Dice Poker", "five of a kind", "Full House", …).
+- The game, its categories and all texts use generic names only ("Dice Poker", "Five of a Kind", "Full House", …).
+- "Dice Poker" is the name of the game only. The 50-point box is called "Five of a Kind".
 - No trademarked or copyrighted game names, brands or artwork appear anywhere in the app, code or docs.
 
 ## Gameplay
@@ -24,9 +25,9 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
   | Lower | Full House | 25 for a triple plus a pair (five of a kind does not count) |
   | Lower | Small Straight | 30 for 4 consecutive faces |
   | Lower | Large Straight | 40 for 5 consecutive faces |
-  | Lower | Dice Poker | 50 for five of a kind |
+  | Lower | Five of a Kind | 50 for five of a kind |
   | Lower | Chance | Sum of all dice |
-  | Extra | Extra five of a kind | +100 for each further five of a kind once the Dice Poker box holds 50 |
+  | Extra | Extra five of a kind | +100 for each further five of a kind once the Five of a Kind box holds 50 |
 
 - Dice use a cryptographically secure random source.
 - When the game ends, a dialog shows the final score and whether it is a new best, and offers a new game.
@@ -69,12 +70,12 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
 | Time | Early Bird | Finish a game between 5 am and 8 am |
 | Time | Triple Header | Finish 3 games on the same day |
 | Time | Hot Streak | Finish a game on 3 days in a row |
-| Specials | All of a Kind | Three of a Kind, Four of a Kind and Dice Poker all scored above 0 in one game |
-| Specials | Hard Choice | A turn ends on five Sixes while at least two of Sixes, Three of a Kind, Four of a Kind, Dice Poker and Chance are open, including Sixes or Chance (with only the kinds and Dice Poker open, the choice is clear) |
-| Perfection | Perfect *X* (13 quests) | Score a box's maximum: Ones 5 … Sixes 30, Three/Four of a Kind 30, Full House 25, Small Straight 30, Large Straight 40, Dice Poker 50, Chance 30 |
+| Specials | All of a Kind | Three of a Kind, Four of a Kind and Five of a Kind all scored above 0 in one game |
+| Specials | Hard Choice | A turn ends on five Sixes while at least two of Sixes, Three of a Kind, Four of a Kind, Five of a Kind and Chance are open, including Sixes or Chance (with only the "of a Kind" boxes open, the choice is clear) |
+| Perfection | Perfect *X* (13 quests) | Score a box's maximum: Ones 5 … Sixes 30, Three/Four of a Kind 30, Full House 25, Small Straight 30, Large Straight 40, Five of a Kind 50, Chance 30 |
 | Hidden | Surgical Strike | Upper section complete with exactly 63 |
 | Hidden | Against All Odds | Third roll with all 5 dice rerolled lands a Full House, Four of a Kind, Large Straight or five of a kind (in any box) |
-| Hidden | Scratch & Survive | 0 in the Dice Poker box within the first 6 turns, final total above 225 |
+| Hidden | Scratch & Survive | 0 in the Five of a Kind box within the first 6 turns, final total above 225 |
 | Hidden | All-In | Exactly one die held after roll 1, and the turn ends in five of a kind (on roll 2 or 3) |
 | Hidden | The Gambler | 25+ in Chance with at least one One or Two among the dice |
 | Hidden | Zero Waste | Finish a game with no 0 on the scorecard |
@@ -98,7 +99,7 @@ Dice Poker is a single-player dice game in the browser. It is a static web app: 
 - The game is available in English, German, French, Spanish and Indonesian.
 - The language follows the browser's language settings: the first supported language in the player's list wins (`de-AT` counts as German). If none is supported, the game uses English.
 - Everything the player reads or hears from a screen reader is translated. This includes box names, hints, quests, the leaderboard, dates and the update and install texts.
-- The name "Dice Poker" stays the same in every language: it is the app's name and also the name of the 50-point box.
+- The name "Dice Poker" stays the same in every language: it is the app's name. The 50-point box is translated: Five of a Kind, Fünferpasch, Cinq identiques, Cinco iguales, Lima Kembar.
 - The naming rule above applies to every language. No translation uses the local brand name of a dice game.
 - Every language fits on a 320px-wide phone without horizontal scrolling.
 

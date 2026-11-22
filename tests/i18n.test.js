@@ -95,6 +95,21 @@ test("no translation uses a trademarked game name", () => {
   }
 });
 
+test("the five of a kind box is never called dice poker", () => {
+  /**
+   * The 50-point box and every quest text use the box name, not the app name "Dice Poker".
+   *
+   * "Dice Poker" is the game's name only; the box was renamed to "Five of a Kind" in v1.7.0.
+   */
+  for (const lang of I18n.SUPPORTED) {
+    for (const [key, msg] of Object.entries(I18n.LOCALES[lang])) {
+      if (key === "meta.description") continue;
+      assert.ok(!JSON.stringify(msg).includes("Dice Poker"), `${lang} ${key}`);
+    }
+  }
+  assert.strictEqual(I18n.forLang("en").t("cat.poker"), "Five of a Kind");
+});
+
 test("the language follows the browser's language list", () => {
   /**
    * The first supported browser language wins; anything else falls back to English.
