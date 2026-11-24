@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert");
 const S = require("../scoring.js");
-const { QUESTS, CATEGORIES } = require("../quests.js");
+const { QUESTS, CATEGORIES, MODES } = require("../quests.js");
 const I18n = require("../i18n.js");
 
 const EN = I18n.LOCALES.en;
@@ -62,7 +62,7 @@ test("plural entries are well formed", () => {
 
 test("every box, quest and quest group has text in every language", () => {
   /**
-   * Scorecard boxes, quests and quest groups all resolve to real text in every language.
+   * Scorecard boxes, quests, quest groups and game modes all resolve to real text in every language.
    *
    * A lookup that falls through returns the key itself, which must never happen.
    */
@@ -72,6 +72,7 @@ test("every box, quest and quest group has text in every language", () => {
     for (const c of [...S.UPPER, ...S.LOWER]) assert.ok(dict["cat." + c.id], `${lang} cat.${c.id}`);
     for (const c of S.LOWER) assert.ok(dict["hint." + c.id], `${lang} hint.${c.id}`);
     for (const c of CATEGORIES) assert.ok(dict["questcat." + c.id], `${lang} questcat.${c.id}`);
+    for (const m of MODES) assert.ok(dict["mode." + m.id], `${lang} mode.${m.id}`);
     for (const q of QUESTS) {
       for (const s of [questName(q), questText(q)]) {
         assert.ok(s && !s.startsWith("quest.") && !/\{\w+\}/.test(s), `${lang} ${q.id}: ${s}`);

@@ -7,10 +7,15 @@
   const MAX_ROLLS = 3;
   const BEST_KEY = "dice-poker-best";
   const HISTORY_KEY = "dice-poker-history";
-  const HISTORY_MAX = 10;
+  const HISTORY_MAX = 10; // per mode
   const CURRENT_KEY = "dice-poker-current";
+  const MODE_KEY = "dice-poker-mode";
   // Bump when the saved shape changes. loadSaved() still accepts format 1 (v1.2.0).
+  // `mode` (v1.10.0) is optional within format 2: a save without it is Classic.
   const SAVE_FORMAT = 2;
+  const MODES = Quests.MODES;
+  const getMode = (id) => MODES.find((m) => m.id === id) || MODES[0];
+  const getModeLabel = (id) => t("mode." + id);
 
   const PIPS = {
     1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9],
@@ -22,7 +27,7 @@
 
   let state;
 
-  const freshState = () => ({ dice: [1, 1, 1, 1, 1], held: [false, false, false, false, false],
+  const freshState = () => ({ mode: loadModePref(), dice: [1, 1, 1, 1, 1], held: [false, false, false, false, false],
     rollsLeft: MAX_ROLLS, scores: {}, pokerBonuses: 0, rolling: false,
     // Quest tracking: scored turns, which dice each roll of this turn rolled
     // (null = unknown, e.g. after restoring an older save) and when play began.
@@ -34,13 +39,32 @@
     render();
   }
 
+  /* ---------- Modes ---------- */
+
+  /** The mode for the next game: the last one picked, if it is still unlocked. */
+  function loadModePref() {
+    let id;
+    try { id = localStorage.getItem(MODE_KEY); } catch (e) {}
+    return MODES.some((m) => m.id === id) && Quests.isModeUnlocked(id, QuestUI.countCompleted()) ? id : "classic";
+  }
+
+  /** Switch the mode of a game that has not started yet. */
+  function selectMode(id) {
+    if (hasStarted() || !Quests.isModeUnlocked(id, QuestUI.countCompleted())) return;
+    state.mode = id;
+    try { localStorage.setItem(MODE_KEY, id); } catch (e) {}
+    render();
+  }
+
+  const canHold = () => getMode(state.mode).hold;
+
   /* ---------- Game in progress survives reloads ---------- */
 
   function persist(s) {
-    const { dice, held, rollsLeft, scores, pokerBonuses, log, rolls, startedAt } = s || state;
+    const { mode, dice, held, rollsLeft, scores, pokerBonuses, log, rolls, startedAt } = s || state;
     try {
       localStorage.setItem(CURRENT_KEY, JSON.stringify(
-        { v: SAVE_FORMAT, dice, held, rollsLeft, scores, pokerBonuses, log, rolls, startedAt }));
+        { v: SAVE_FORMAT, mode, dice, held, rollsLeft, scores, pokerBonuses, log, rolls, startedAt }));
     } catch (e) {}
   }
 
@@ -72,7 +96,10 @@
       ? s.log : [];
     const rolls = Array.isArray(s.rolls) && s.rolls.length === rollsUsed && s.rolls.every(isMask) ? s.rolls : null;
     const startedAt = Number.isFinite(s.startedAt) ? s.startedAt : null;
-    return { dice: s.dice, held: s.rollsLeft === MAX_ROLLS ? s.held.map(() => false) : s.held,
+    // A game keeps its mode even if the mode would be locked now.
+    const mode = MODES.some((m) => m.id === s.mode) ? s.mode : "classic";
+    const noHolds = s.rollsLeft === MAX_ROLLS || !getMode(mode).hold;
+    return { mode, dice: s.dice, held: noHolds ? s.held.map(() => false) : s.held,
       rollsLeft: s.rollsLeft, scores: s.scores, pokerBonuses: s.pokerBonuses, rolling: false,
       log, rolls: rollsUsed === 0 ? [] : rolls, startedAt };
   }
@@ -80,6 +107,7 @@
   const rollDie = () => 1 + Math.floor(crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 * 6);
   const hasRolled = () => state.rollsLeft < MAX_ROLLS;
   const round = () => Object.keys(state.scores).length + 1;
+  const hasStarted = () => hasRolled() || Object.keys(state.scores).length > 0;
 
   function roll() {
     if (state.rollsLeft === 0 || state.rolling) return;
@@ -102,7 +130,7 @@
   }
 
   function toggleHold(i) {
-    if (!hasRolled() || state.rolling || state.rollsLeft === MAX_ROLLS) return;
+    if (!hasRolled() || state.rolling || state.rollsLeft === MAX_ROLLS || !canHold()) return;
     state.held[i] = !state.held[i];
     Sound.hold(state.held[i]);
     persist();
@@ -125,31 +153,44 @@
     state.rolls = [];
     if (Object.keys(state.scores).length === ALL.length) return finish();
     persist();
-    render();
+    // Award first, so the mode switch shows the new quest count.
     QuestUI.award(Quests.newlyCompleted(questContext(false), QuestUI.done()));
+    render();
   }
 
-  function questContext(finished) {
+  function questContext(finished, played) {
     const tot = totals(state.scores, state.pokerBonuses);
     return { log: state.log, turn: state.log[state.log.length - 1], scores: state.scores,
       upperSum: tot.upperSum, finished, total: tot.total, startedAt: state.startedAt,
-      finishedAt: finished ? Date.now() : null, history: loadHistory() };
+      finishedAt: finished ? Date.now() : null, history: loadHistory(state.mode),
+      mode: state.mode, played: played != null ? played : QuestUI.getPlayedCount() };
   }
 
-  function loadHistory() {
+  /** Finished games of every mode, newest first. Entries without a mode are Classic. */
+  function loadAllHistory() {
     try {
       const h = JSON.parse(localStorage.getItem(HISTORY_KEY));
-      return Array.isArray(h) ? h.filter((g) => Number.isFinite(g.score)).slice(0, HISTORY_MAX) : [];
+      return Array.isArray(h) ? h.filter((g) => g && Number.isFinite(g.score)) : [];
     } catch (e) { return []; }
   }
 
-  function saveGame(total) {
-    const h = [{ score: total, date: Date.now() }, ...loadHistory()].slice(0, HISTORY_MAX);
+  /** The last finished games of one mode, newest first. */
+  function loadHistory(mode) {
+    return loadAllHistory().filter((g) => (g.mode || "classic") === mode).slice(0, HISTORY_MAX);
+  }
+
+  function saveGame(total, mode) {
+    const kept = {};
+    const h = [{ score: total, date: Date.now(), mode }, ...loadAllHistory()]
+      .filter((g) => { const m = g.mode || "classic"; kept[m] = (kept[m] || 0) + 1; return kept[m] <= HISTORY_MAX; });
     try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); } catch (e) {}
   }
 
-  function bestScore() {
-    try { return +localStorage.getItem(BEST_KEY) || 0; } catch (e) { return 0; }
+  // Classic keeps the original key, so bests from before modes stay.
+  const getBestKey = (mode) => (mode === "classic" ? BEST_KEY : BEST_KEY + "-" + mode);
+
+  function bestScore(mode = state.mode) {
+    try { return +localStorage.getItem(getBestKey(mode)) || 0; } catch (e) { return 0; }
   }
 
   function finish() {
@@ -159,17 +200,46 @@
     const { total } = totals(state.scores, state.pokerBonuses);
     const best = bestScore();
     const record = total > best;
-    if (record) { try { localStorage.setItem(BEST_KEY, total); } catch (e) {} }
+    if (record) { try { localStorage.setItem(getBestKey(state.mode), total); } catch (e) {} }
     $("final").textContent = t("end.scored", { n: total }) + " " + (record ? t("end.newBest") : t("end.best", { best }));
-    saveGame(total);
+    // Count first: the first count starts from the history, which must not
+    // include this game yet.
+    const played = QuestUI.recordFinishedGame();
+    saveGame(total, state.mode);
     render();
     // Quest cards play first; the game-over dialog follows once they are done.
-    QuestUI.award(Quests.newlyCompleted(questContext(true), QuestUI.done()))
+    QuestUI.award(Quests.newlyCompleted(questContext(true, played), QuestUI.done()))
       .then(() => endDlg.showModal());
   }
 
   function renderSub() {
-    $("sub").textContent = t("sub", { round: Math.min(round(), 13), best: bestScore() || "–" });
+    const params = { round: Math.min(round(), 13), best: bestScore() || "–", mode: getModeLabel(state.mode) };
+    $("sub").textContent = t(state.mode === "classic" ? "sub" : "sub.mode", params);
+  }
+
+  /** The mode switch above the dice. It can only be used before the first roll. */
+  function renderModes() {
+    const n = QuestUI.countCompleted();
+    $("modes").replaceChildren(...MODES.map((m) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "mode";
+      const unlocked = Quests.isModeUnlocked(m.id, n);
+      b.setAttribute("aria-pressed", state.mode === m.id);
+      b.disabled = !unlocked || hasStarted();
+      const name = document.createElement("span");
+      name.textContent = (unlocked ? "" : "🔒 ") + getModeLabel(m.id);
+      b.append(name);
+      if (!unlocked) {
+        const p = document.createElement("small");
+        p.textContent = t("mode.progress", { n, goal: m.unlockAt });
+        b.append(p);
+        b.setAttribute("aria-label", t("mode.lockedLabel", { mode: getModeLabel(m.id), n, goal: m.unlockAt }));
+        b.title = b.getAttribute("aria-label");
+      }
+      b.addEventListener("click", () => selectMode(m.id));
+      return b;
+    }));
   }
 
   function renderDice() {
@@ -179,7 +249,7 @@
       b.className = "die" + (state.held[i] ? " held" : "");
       b.setAttribute("aria-pressed", state.held[i]);
       b.setAttribute("aria-label", t(state.held[i] ? "die.labelHeld" : "die.label", { i: i + 1, v }));
-      b.disabled = !hasRolled();
+      b.disabled = !hasRolled() || !canHold();
       if (!hasRolled()) b.classList.add("blank");
       for (let p = 1; p <= 9; p++) {
         const s = document.createElement("span");
@@ -194,8 +264,11 @@
   function renderControls() {
     rollBtn.disabled = state.rollsLeft === 0 || state.rolling;
     rollBtn.textContent = state.rollsLeft === MAX_ROLLS ? t("roll.first") : t("roll.again", { n: state.rollsLeft });
-    statusEl.textContent = t(!hasRolled() ? "status.start" : state.rollsLeft === 0 ? "status.noRolls" : "status.choose");
+    statusEl.textContent = t(!hasRolled() ? "status.start" : state.rollsLeft === 0 ? "status.noRolls"
+      : canHold() ? "status.choose" : "status.chooseNoHold");
+    $("tip").textContent = t(canHold() ? "tip" : "tip.noHold");
     renderSub();
+    renderModes();
   }
 
   function row(cat) {
@@ -255,7 +328,9 @@
   function renderAside() {
     const { total } = totals(state.scores, state.pokerBonuses);
     const live = Object.keys(state.scores).length < ALL.length;
-    const hist = loadHistory();
+    const hist = loadHistory(state.mode);
+    $("lb-title").textContent = state.mode === "classic" ? t("leaderboard.title")
+      : t("leaderboard.mode", { mode: getModeLabel(state.mode) });
     const rank = 1 + hist.filter((g) => g.score > total).length;
     const scale = Math.max(200, Math.ceil(Math.max(total, ...hist.map((g) => g.score)) / 50) * 50);
     const pct = (n) => Math.min(100, (n / scale) * 100);

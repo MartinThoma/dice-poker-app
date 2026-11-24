@@ -39,6 +39,7 @@ Every change that should reach players needs `make bump`. Otherwise installed co
     * Specific quests
         * All of a kind: 3-, 4- and 5-of-a-kind
         
+* ~~Add more quests: games played, speed, speed with a minimum score, and a Hands Off mode (no holding) that unlocks after 10 quests~~ (done in v1.10.0)
 * ~~Add quests for very low scores~~ (done: Rock Bottom, Limbo, Clean Slate, Lowball and the hidden Wooden Spoon)
 * Add a cheering sound and a firework anymation when five of a kind is rolled - ~~also rename the "Dice Poker" box to "Five of a Kind"~~ (renamed in v1.7.0)
 * Show a "loading bar" for the bonus

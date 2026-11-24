@@ -14,7 +14,13 @@
  *   total      final total (only meaningful when finished)
  *   startedAt  ms timestamp of the game's first roll, or null if unknown
  *   finishedAt ms timestamp the game ended (only when finished)
- *   history    finished games {score, date}, newest first, including this one
+ *   history    finished games of this mode {score, date}, newest first,
+ *              including this one
+ *   mode       the game's mode id ("classic" if missing, see MODES)
+ *   played     finished games in all modes, including this one (when finished)
+ *
+ * A quest only counts in the mode of its group (CATEGORIES[].mode); a group
+ * without a mode counts in every mode.
  */
 (function (root) {
   "use strict";
@@ -34,8 +40,30 @@
     threeKind: 30, fourKind: 30, fullHouse: 25, smallStraight: 30, largeStraight: 40, poker: 50, chance: 30,
   };
 
-  // Quest groups in display order. Labels live in locales/*.js ("questcat.<id>").
-  const CATEGORIES = [{ id: "score" }, { id: "low" }, { id: "time" }, { id: "special" }, { id: "perfect" }, { id: "hidden" }];
+  // Game modes. A mode unlocks once `unlockAt` quests are complete; `hold`
+  // says whether dice can be held between rolls. Labels: "mode.<id>".
+  const MODES = [
+    { id: "classic", hold: true, unlockAt: 0 },
+    { id: "handsOff", hold: false, unlockAt: 10 },
+  ];
+
+  // Quest groups in display order, with the mode their quests count in (none:
+  // every mode). Labels live in locales/*.js ("questcat.<id>").
+  const CATEGORIES = [
+    { id: "score", mode: "classic" }, { id: "low", mode: "classic" }, { id: "time", mode: "classic" },
+    { id: "career" }, { id: "special", mode: "classic" }, { id: "perfect", mode: "classic" },
+    { id: "hidden", mode: "classic" }, { id: "handsOff", mode: "handsOff" },
+  ];
+  const groupMode = Object.fromEntries(CATEGORIES.map((g) => [g.id, g.mode]));
+
+  // Finished games needed for each Career quest (all modes count).
+  const CAREER = { "warming-up": 10, "regular": 50, "centurion": 100, "living-legend": 1000 };
+  const CAREER_ICONS = { "warming-up": "🌱", "regular": "🪑", "centurion": "🏛️", "living-legend": "🌟" };
+
+  const MINUTE = 60 * 1000;
+  /** Play time of a finished game in ms, or null if its start is unknown. */
+  const getDuration = (c) => (c.finished && c.startedAt != null ? c.finishedAt - c.startedAt : null);
+  const isFasterThan = (c, ms) => { const d = getDuration(c); return d !== null && d < ms; };
 
   // Lowest possible final score: Chance always holds the dice sum (at least
   // 5 with five Ones) and every other box can be scratched.
@@ -67,7 +95,11 @@
 
     // Time-based
     { id: "blitz", cat: "time", icon: "⚡",
-      check: (c) => c.finished && c.startedAt != null && c.finishedAt - c.startedAt < 3 * 60 * 1000 },
+      check: (c) => isFasterThan(c, 3 * MINUTE) },
+    { id: "speed-demon", cat: "time", icon: "🏎️",
+      check: (c) => isFasterThan(c, MINUTE) },
+    { id: "quick-draw", cat: "time", icon: "🤠",
+      check: (c) => isFasterThan(c, 3 * MINUTE) && c.total >= 200 },
     { id: "night-owl", cat: "time", icon: "🦉",
       check: (c) => c.finished && hour(c.finishedAt) < 5 },
     { id: "early-bird", cat: "time", icon: "🐦",
@@ -81,6 +113,12 @@
         const d = new Date(c.finishedAt);
         return [0, 1, 2].every((back) => days.has(dayKey(new Date(d.getFullYear(), d.getMonth(), d.getDate() - back).getTime())));
       } },
+
+    // Career: finished games in any mode.
+    ...Object.entries(CAREER).map(([id, goal]) => ({
+      id, cat: "career", icon: CAREER_ICONS[id], goal,
+      check: (c) => c.finished && c.played >= goal,
+    })),
 
     // Specials
     { id: "all-of-a-kind", cat: "special", icon: "🎲",
@@ -138,14 +176,37 @@
       } },
     { id: "wooden-spoon", cat: "hidden", icon: "🥄",
       check: (c) => c.finished && c.total === LOWEST },
+
+    // Hands Off: no dice can be held. Thresholds come from simulating 200,000
+    // games without holding: 175+ in about 1 game in 5, 200+ in 1 in 30.
+    { id: "look-no-hands", cat: "handsOff", icon: "🙌",
+      check: (c) => c.finished },
+    { id: "steady-hand", cat: "handsOff", icon: "✋",
+      check: (c) => c.finished && c.total >= 175 },
+    { id: "untouchable", cat: "handsOff", icon: "🧊",
+      check: (c) => c.finished && c.total >= 200 },
+    { id: "bolt-from-the-blue", cat: "handsOff", icon: "🌩️",
+      check: (c) => c.turn && fiveKind(c.turn.dice) },
+    { id: "autopilot", cat: "handsOff", icon: "🛩️",
+      check: (c) => isFasterThan(c, 1.5 * MINUTE) && c.total >= 150 },
   ];
+
+  /** True if quest `q` can be earned in mode `mode`. */
+  const isQuestInMode = (q, mode) => !groupMode[q.cat] || groupMode[q.cat] === mode;
 
   /** Ids of quests not in `done` whose condition holds for context `c`. */
   function newlyCompleted(c, done) {
-    return QUESTS.filter((q) => !(q.id in done) && q.check(c)).map((q) => q.id);
+    const mode = c.mode || "classic";
+    return QUESTS.filter((q) => !(q.id in done) && isQuestInMode(q, mode) && q.check(c)).map((q) => q.id);
   }
 
-  const api = { QUESTS, CATEGORIES, PERFECT, LOWEST, newlyCompleted };
+  /** True once enough quests are complete to play mode `id`. */
+  function isModeUnlocked(id, completedCount) {
+    const m = MODES.find((x) => x.id === id);
+    return !!m && completedCount >= m.unlockAt;
+  }
+
+  const api = { QUESTS, CATEGORIES, MODES, PERFECT, LOWEST, CAREER, newlyCompleted, isQuestInMode, isModeUnlocked };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.Quests = api;
 })(typeof window !== "undefined" ? window : globalThis);

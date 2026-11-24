@@ -7,15 +7,20 @@
   - `scoring.js`: pure scoring rules with no DOM access. It also exports for Node so the rules can be tested.
   - `game.js`: game state, rendering and the leaderboard.
   - `sound.js`: the generated sound effects and the on/off setting.
-  - `quests.js`: quest definitions and pure checks.
+  - `quests.js`: quest definitions and pure checks, plus the game modes and their unlock rule (unlocking is a quest rule, and keeping it here makes it testable in Node).
   - `questui.js`: quest storage, celebrations and the quest list.
   - `i18n.js` and `locales/<lang>.js`: language detection and all UI text.
   - `tests/`: Node unit tests for the scoring rules, quest rules and translations (`make test`).
   - `pwa.js`: install, version and update UI.
   - `sw.js`: the service worker.
   - `version.js`: the version shown to players.
-- **Storage:** `localStorage` keys `dice-poker-best` (number) and `dice-poker-history` (newest first, at most 10 entries of `{score, date}`). Every access is wrapped in try/catch, so the game still runs when storage is blocked.
-- **Game in progress:** saved under `dice-poker-current` as `{v, dice, held, rollsLeft, scores, pokerBonuses}`.
+- **Storage:** `localStorage` keys (every access is wrapped in try/catch, so the game still runs when storage is blocked):
+  - `dice-poker-best`: the Classic best score. Other modes use `dice-poker-best-<mode>` (e.g. `dice-poker-best-handsOff`), so the Classic best from before modes is kept.
+  - `dice-poker-history`: one list for all modes, newest first, with entries `{score, date, mode}`. An entry without `mode` (from before v1.10.0) is Classic. Each mode keeps at most 10 entries, so Hands Off games never push Classic games out.
+  - `dice-poker-mode`: the mode picked for the next game. If that mode is unknown or locked, the next game is Classic.
+  - `dice-poker-played`: finished games in all modes, for the Career quests. When it is missing, the first read starts from the history's length. `finish()` counts the game before writing it to the history, so the first game after the update is not counted twice.
+- **Game in progress:** saved under `dice-poker-current` as `{v, mode, dice, held, rollsLeft, scores, pokerBonuses}`.
+  - `mode` (v1.10.0) is an optional field within save format 2, not a new format: a save without it is a Classic game, so games in progress survive the update. A saved game keeps its mode even if that mode would be locked now. In a mode without holding, saved holds are cleared on load.
   - It is written after every action (roll, hold, score). A roll is saved the moment the button is clicked, with the final dice, before the 450ms animation. That way a reload mid-animation can't undo it.
   - On load, the save is validated field by field (dice 1–6, 5 booleans for holds, known category ids, fewer than 13 scores). Anything invalid or unparseable is ignored, and a fresh game starts.
   - `v` is a save-format number, separate from the app version, so app updates keep saved games. Bump `SAVE_FORMAT` in `game.js` only when the shape changes. Older saves are then discarded.
@@ -88,10 +93,22 @@
   - Past-game labels are pushed apart by at least 15px, so a label can sit slightly above its own mark.
 - **Update banner:** a dark bar fixed to the top of the screen, so it can't be missed. The footer holds the version, "Check for updates" and "Install app".
 
+## Modes
+
+- **Definition:** `Quests.MODES` lists each mode as `{id, hold, unlockAt}`. Classic is `{hold: true, unlockAt: 0}` and Hands Off is `{hold: false, unlockAt: 10}`. A new mode needs an entry there, a `mode.<id>` label in every locale and, if it has its own quests, a quest group.
+- **No holding** is enforced in `toggleHold()`. In such a mode the dice buttons stay disabled after a roll, the status line drops "hold dice" and the tip explains the rule. Roll masks are then all-true by themselves.
+- **Mode switch:** a segmented control at the top of the felt. It stays visible during the game (disabled, with the active mode highlighted) instead of disappearing at the first roll, so the dice don't jump and the active mode is always visible.
+  - Locked modes are disabled buttons with a lock, a second line with the progress ("0/10 quests") and an `aria-label` that explains the unlock.
+  - There is no "New game" button. The switch works before the first roll of each game, which covers both the first game and every game after "Play again".
+- **Per-mode views:** the header line, the leaderboard and the best score all follow the current game's mode. Classic keeps its old texts; other modes add the mode name.
+- **Unlock toast:** `QuestUI.award()` compares the completed count before and after saving and queues a toast for each mode whose `unlockAt` was crossed. It uses the quest toast with a different label (`toast.mode`).
+
 ## Quests
 
+- **Modes:** every quest group in `CATEGORIES` names the mode its quests count in; a group without one (Career) counts in every mode. `newlyCompleted()` filters on `context.mode`, and a context without a mode is Classic. This is a rule per group, not per quest, so a new quest can't accidentally count in the wrong mode.
+- **Career quests** carry a `goal`. The list shows open ones with their progress, taken from `QuestUI.played()`.
 - **Split:** the rules (`quests.js`) are pure functions over a context object and are tested in Node (`make test`). The UI (`questui.js`) handles storage, celebrations and the list dialog.
-- **Context:** checked after every scored turn and once more when the game is finished. It holds the turn log, the full scorecard, totals, the start and finish times, and the history (which includes the just-finished game).
+- **Context:** checked after every scored turn and once more when the game is finished. It holds the turn log, the full scorecard, totals, the start and finish times, the mode, the number of games played and the history of the game's mode (which includes the just-finished game). Triple Header and Hot Streak, both Classic quests, therefore count Classic games only.
 - **Turn log:** each scored turn records `{turn, cat, score, dice, rolls}`. `rolls` has one 5-boolean mask per roll (true = that die was rolled), or `null` if unknown.
   - The mask is saved in the same `persist()` call as the roll's result, so a reload mid-animation can't desync them.
   - `turn` is the turn number at scoring time. Order-sensitive quests (Scratch & Survive, The Escalator) use it rather than the position in the log, so a log that starts mid-game can't produce false positives.

@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert");
 const S = require("../scoring.js");
-const { QUESTS, CATEGORIES, PERFECT, LOWEST, newlyCompleted } = require("../quests.js");
+const { QUESTS, CATEGORIES, MODES, PERFECT, LOWEST, CAREER, newlyCompleted, isQuestInMode, isModeUnlocked } = require("../quests.js");
 const I18n = require("../i18n.js");
 
 const ALL_ROLLED = [true, true, true, true, true];
@@ -275,4 +275,82 @@ test("hard choice needs a real choice for five sixes", () => {
   assert.ok(!q.check(ctx([...filled(["sixes", "threeKind", "fourKind", "poker"]), { cat: "chance", dice: six }])),
     "only Chance left");
   assert.ok(!q.check(ctx([{ cat: "chance", dice: [5, 5, 5, 5, 5] }])), "five Fives");
+});
+
+test("speed quests need a fast finish, some with a minimum score", () => {
+  /**
+   * Speed Demon needs under 1 minute; Quick Draw needs 200+ points in under 3 minutes.
+   *
+   * Both measure from the first roll to the last score and need a known start.
+   */
+  const getTimeAt = (s) => new Date(2026, 10, 20, 10, 0, s).getTime();
+  const createFinishedGame = (secs, total) => ({ finished: true, startedAt: getTimeAt(0), finishedAt: getTimeAt(secs), total });
+  assert.ok(quest("speed-demon").check(createFinishedGame(59, 5)));
+  assert.ok(!quest("speed-demon").check(createFinishedGame(60, 5)));
+  assert.ok(!quest("speed-demon").check({ ...createFinishedGame(30, 5), startedAt: null }), "unknown start");
+  assert.ok(!quest("speed-demon").check({ ...createFinishedGame(30, 5), finished: false }));
+  assert.ok(quest("quick-draw").check(createFinishedGame(179, 200)));
+  assert.ok(!quest("quick-draw").check(createFinishedGame(179, 199)));
+  assert.ok(!quest("quick-draw").check(createFinishedGame(180, 300)));
+});
+
+test("career quests count finished games in every mode", () => {
+  /**
+   * Career quests trigger when a finished game reaches their games-played goal, in any mode.
+   */
+  assert.deepStrictEqual(Object.values(CAREER), [10, 50, 100, 1000]);
+  for (const [id, goal] of Object.entries(CAREER)) {
+    assert.ok(quest(id).check({ finished: true, played: goal }), id);
+    assert.ok(!quest(id).check({ finished: true, played: goal - 1 }), id);
+    assert.ok(!quest(id).check({ finished: false, played: goal }), id);
+    for (const m of MODES) assert.ok(isQuestInMode(quest(id), m.id), `${id} in ${m.id}`);
+  }
+  const c = ctx([{ cat: "chance", dice: [1, 2, 3, 4, 6] }], { finished: true, played: 10, mode: "handsOff" });
+  assert.ok(newlyCompleted(c, {}).includes("warming-up"));
+});
+
+test("quests count only in the mode of their group", () => {
+  /**
+   * Classic quests can't be earned in Hands Off mode, and Hands Off quests can't be earned in Classic.
+   *
+   * Without holding, every third roll rerolls all five dice, which would make
+   * Against All Odds trivial. A context without a mode is Classic.
+   */
+  const strong = { cat: "fullHouse", dice: [2, 2, 3, 3, 3], rolls: [ALL_ROLLED, ALL_ROLLED, ALL_ROLLED] };
+  assert.ok(newlyCompleted(ctx([strong]), {}).includes("against-all-odds"));
+  assert.ok(!newlyCompleted(ctx([strong], { mode: "handsOff" }), {}).includes("against-all-odds"));
+  const five = { cat: "poker", dice: [3, 3, 3, 3, 3] };
+  assert.ok(newlyCompleted(ctx([five], { mode: "handsOff" }), {}).includes("bolt-from-the-blue"));
+  assert.ok(!newlyCompleted(ctx([five]), {}).includes("bolt-from-the-blue"));
+  assert.ok(!newlyCompleted(ctx([five], { mode: "handsOff" }), {}).includes("perfect-poker"));
+  for (const q of QUESTS.filter((x) => x.cat === "handsOff")) {
+    assert.ok(isQuestInMode(q, "handsOff") && !isQuestInMode(q, "classic"), q.id);
+  }
+});
+
+test("hands off quests use their score and time thresholds", () => {
+  /**
+   * Hands Off quests check the finished total (175+, 200+) and, for Autopilot, 150+ in under 90 seconds.
+   */
+  const getTimeAt = (s) => new Date(2026, 10, 20, 10, 0, s).getTime();
+  const createFinishedGame = (total, secs = 600) => ({ finished: true, total, startedAt: getTimeAt(0), finishedAt: getTimeAt(secs) });
+  assert.ok(quest("look-no-hands").check(createFinishedGame(5)));
+  assert.ok(!quest("look-no-hands").check({ finished: false }));
+  assert.ok(quest("steady-hand").check(createFinishedGame(175)) && !quest("steady-hand").check(createFinishedGame(174)));
+  assert.ok(quest("untouchable").check(createFinishedGame(200)) && !quest("untouchable").check(createFinishedGame(199)));
+  assert.ok(quest("autopilot").check(createFinishedGame(150, 89)));
+  assert.ok(!quest("autopilot").check(createFinishedGame(150, 90)));
+  assert.ok(!quest("autopilot").check(createFinishedGame(149, 60)));
+});
+
+test("hands off mode unlocks after 10 quests", () => {
+  /**
+   * Classic is always playable; Hands Off unlocks once 10 quests are complete.
+   */
+  assert.ok(isModeUnlocked("classic", 0));
+  assert.ok(!isModeUnlocked("handsOff", 9));
+  assert.ok(isModeUnlocked("handsOff", 10));
+  assert.ok(!isModeUnlocked("no-such-mode", 100));
+  assert.strictEqual(MODES.find((m) => m.id === "handsOff").hold, false);
+  for (const g of CATEGORIES) assert.ok(!g.mode || MODES.some((m) => m.id === g.mode), g.id);
 });
